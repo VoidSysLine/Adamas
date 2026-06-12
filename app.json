@@ -38,7 +38,8 @@
           "imageWidth": 160
         }
       ],
-      "expo-local-authentication"
+      "expo-local-authentication",
+      "expo-font"
     ],
     "experiments": {
       "typedRoutes": false
