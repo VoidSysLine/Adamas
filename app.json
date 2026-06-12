@@ -1,0 +1,47 @@
+{
+  "expo": {
+    "name": "Adamas",
+    "slug": "adamas",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "scheme": "adamas",
+    "userInterfaceStyle": "automatic",
+    "backgroundColor": "#05060A",
+    "ios": {
+      "supportsTablet": true,
+      "infoPlist": {
+        "NSFaceIDUsageDescription": "Adamas verwendet Face ID, um deinen Tresor sicher zu entsperren."
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#05060A",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      },
+      "predictiveBackGestureEnabled": false
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      "expo-secure-store",
+      "expo-localization",
+      "expo-router",
+      [
+        "expo-splash-screen",
+        {
+          "backgroundColor": "#05060A",
+          "image": "./assets/splash-icon.png",
+          "imageWidth": 160
+        }
+      ],
+      "expo-local-authentication"
+    ],
+    "experiments": {
+      "typedRoutes": false
+    }
+  }
+}
