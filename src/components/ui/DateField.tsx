@@ -7,7 +7,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { GradientButton } from './GradientButton';
 import { PressableScale, triggerHaptic } from './PressableScale';
 import { parseFieldDate } from '@/lib/dates';
-import { radius, spacing, type as typo, useTheme } from '@/theme';
+import { fonts, radius, spacing, type as typo, useTheme } from '@/theme';
 
 interface Props {
   label: string;
@@ -163,6 +163,7 @@ const styles = StyleSheet.create({
   },
   value: {
     flex: 1,
+    fontFamily: fonts.regular,
     fontSize: 16,
   },
   backdrop: {

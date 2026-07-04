@@ -1,7 +1,7 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import React from 'react';
 import { ActivityIndicator, StyleSheet, Text, type StyleProp, type ViewStyle } from 'react-native';
-import { radius, type as typo, useTheme } from '@/theme';
+import { AURORA_LOCATIONS, radius, type as typo, useTheme } from '@/theme';
 import { PressableScale, type HapticKind } from './PressableScale';
 
 interface Props {
@@ -25,7 +25,8 @@ export function GradientButton({ label, onPress, loading, disabled, haptic = 'me
       style={[{ opacity: inactive ? 0.55 : 1 }, style]}
     >
       <LinearGradient
-        colors={[...theme.colors.heroGradient]}
+        colors={theme.colors.heroGradient}
+        locations={[...AURORA_LOCATIONS]}
         start={{ x: 0, y: 0.5 }}
         end={{ x: 1, y: 0.5 }}
         style={styles.gradient}

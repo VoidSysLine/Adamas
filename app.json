@@ -7,7 +7,7 @@
     "icon": "./assets/icon.png",
     "scheme": "adamas",
     "userInterfaceStyle": "automatic",
-    "backgroundColor": "#05060A",
+    "backgroundColor": "#06070D",
     "ios": {
       "supportsTablet": true,
       "infoPlist": {
@@ -16,7 +16,7 @@
     },
     "android": {
       "adaptiveIcon": {
-        "backgroundColor": "#05060A",
+        "backgroundColor": "#06070D",
         "foregroundImage": "./assets/android-icon-foreground.png",
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
@@ -33,7 +33,7 @@
       [
         "expo-splash-screen",
         {
-          "backgroundColor": "#05060A",
+          "backgroundColor": "#06070D",
           "image": "./assets/splash-icon.png",
           "imageWidth": 160
         }

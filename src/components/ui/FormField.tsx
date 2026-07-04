@@ -129,6 +129,7 @@ const styles = StyleSheet.create({
   },
   input: {
     flex: 1,
+    fontFamily: fonts.regular,
     fontSize: 16,
     paddingVertical: 13,
   },

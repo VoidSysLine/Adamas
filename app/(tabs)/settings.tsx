@@ -5,6 +5,7 @@ import { Alert, ScrollView, StyleSheet, Switch, Text, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { GlassCard } from '@/components/ui/GlassCard';
 import { PressableScale, triggerHaptic } from '@/components/ui/PressableScale';
+import { PrismGem } from '@/components/ui/PrismGem';
 import { SegmentedControl } from '@/components/ui/SegmentedControl';
 import { useToast } from '@/components/ui/Toast';
 import { useT } from '@/i18n';
@@ -13,9 +14,9 @@ import { useVault } from '@/store/vaultStore';
 import { radius, spacing, type as typo, useTheme } from '@/theme';
 
 const APP_ICONS: { id: 'obsidian' | 'ice' | 'gold'; colors: [string, string] }[] = [
-  { id: 'obsidian', colors: ['#1E2435', '#0B0E18'] },
-  { id: 'ice', colors: ['#67E8F9', '#6E9BFF'] },
-  { id: 'gold', colors: ['#F5C66B', '#C98F1B'] },
+  { id: 'obsidian', colors: ['#1B2030', '#06070D'] },
+  { id: 'ice', colors: ['#FCFDFF', '#E2E8F1'] },
+  { id: 'gold', colors: ['#F3DC99', '#B98A3F'] },
 ];
 
 const AUTO_LOCK_OPTIONS: AutoLockPref[] = [0, 1, 5, 15, -1];
@@ -94,15 +95,11 @@ export default function SettingsScreen() {
                 >
                   <LinearGradient
                     colors={icon.colors}
-                    start={{ x: 0, y: 0 }}
-                    end={{ x: 1, y: 1 }}
+                    start={{ x: 0.3, y: 0 }}
+                    end={{ x: 0.7, y: 1 }}
                     style={styles.iconPreview}
                   >
-                    <Ionicons
-                      name="diamond"
-                      size={24}
-                      color={icon.id === 'obsidian' ? '#6E9BFF' : 'rgba(8,10,18,0.85)'}
-                    />
+                    <PrismGem size={38} detail="flat" />
                   </LinearGradient>
                 </View>
               </PressableScale>

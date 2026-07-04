@@ -1,4 +1,12 @@
+import {
+  Manrope_400Regular,
+  Manrope_500Medium,
+  Manrope_600SemiBold,
+  Manrope_700Bold,
+} from '@expo-google-fonts/manrope';
+import { Sora_600SemiBold, Sora_700Bold, Sora_800ExtraBold, useFonts } from '@expo-google-fonts/sora';
 import { Stack, useRouter, useSegments } from 'expo-router';
+import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import React, { useEffect, useRef } from 'react';
 import { AppState, useColorScheme } from 'react-native';
@@ -8,6 +16,8 @@ import { ToastProvider } from '@/components/ui/Toast';
 import { useSettings } from '@/store/settingsStore';
 import { useVault } from '@/store/vaultStore';
 import { useTheme } from '@/theme';
+
+void SplashScreen.preventAutoHideAsync();
 
 /** Redirects based on vault status so no protected screen is reachable while locked. */
 function useVaultGuard() {
@@ -54,6 +64,16 @@ export default function RootLayout() {
   const systemScheme = useColorScheme();
   const initialize = useVault((s) => s.initialize);
 
+  const [fontsLoaded] = useFonts({
+    Sora_600SemiBold,
+    Sora_700Bold,
+    Sora_800ExtraBold,
+    Manrope_400Regular,
+    Manrope_500Medium,
+    Manrope_600SemiBold,
+    Manrope_700Bold,
+  });
+
   useEffect(() => {
     useSettings.getState().set('systemScheme', systemScheme === 'light' ? 'light' : 'dark');
   }, [systemScheme]);
@@ -62,8 +82,15 @@ export default function RootLayout() {
     void initialize();
   }, [initialize]);
 
+  useEffect(() => {
+    if (fontsLoaded) void SplashScreen.hideAsync();
+  }, [fontsLoaded]);
+
   useVaultGuard();
   useAutoLock();
+
+  // Hold the native splash until fonts are ready to avoid a fallback-font flash.
+  if (!fontsLoaded) return null;
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>

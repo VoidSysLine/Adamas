@@ -39,7 +39,7 @@ export default function ToolsScreen() {
         <PressableScale haptic="light" onPress={() => router.push('/generator')}>
           <GlassCard style={styles.card}>
             <LinearGradient
-              colors={[...theme.colors.heroGradient]}
+              colors={theme.colors.heroGradient}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 1 }}
               style={styles.icon}

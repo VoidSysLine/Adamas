@@ -10,7 +10,7 @@ import Animated, {
   runOnJS,
 } from 'react-native-reanimated';
 import Svg, { Circle } from 'react-native-svg';
-import { type as typo, useTheme } from '@/theme';
+import { fonts, type as typo, useTheme } from '@/theme';
 
 const AnimatedCircle = Animated.createAnimatedComponent(Circle);
 
@@ -83,8 +83,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   score: {
+    fontFamily: fonts.displayHeavy,
     fontSize: 44,
-    fontWeight: '800',
     letterSpacing: -1.5,
   },
 });

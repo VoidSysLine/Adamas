@@ -9,7 +9,7 @@ import { StrengthMeter } from '@/components/ui/StrengthMeter';
 import { triggerHaptic } from '@/components/ui/PressableScale';
 import { useT } from '@/i18n';
 import { useVault } from '@/store/vaultStore';
-import { spacing, type as typo, useTheme } from '@/theme';
+import { fonts, spacing, type as typo, useTheme } from '@/theme';
 
 export default function Onboarding() {
   const theme = useTheme();
@@ -60,7 +60,7 @@ export default function Onboarding() {
           <Text style={[typo.caption, { color: theme.colors.textSecondary, marginTop: spacing.xl }]}>
             {t('onboarding.welcome')}
           </Text>
-          <Text style={[typo.display, { color: theme.colors.text }]}>Adamas</Text>
+          <Text style={[typo.display, styles.wordmark, { color: theme.colors.text }]}>ADAMAS</Text>
           <Text style={[typo.body, styles.tagline, { color: theme.colors.textSecondary }]}>
             {t('onboarding.tagline')}
           </Text>
@@ -107,6 +107,12 @@ const styles = StyleSheet.create({
   hero: {
     alignItems: 'center',
     marginBottom: spacing.xxl,
+  },
+  wordmark: {
+    fontFamily: fonts.display,
+    letterSpacing: 8,
+    paddingLeft: 8,
+    marginTop: 4,
   },
   tagline: {
     marginTop: spacing.sm,

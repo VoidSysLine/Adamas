@@ -10,7 +10,7 @@ import { PressableScale } from '@/components/ui/PressableScale';
 import { CATEGORY_ORDER, categoryOf } from '@/constants/schema';
 import { useT } from '@/i18n';
 import { useVault } from '@/store/vaultStore';
-import { radius, spacing, type as typo, useTheme } from '@/theme';
+import { fonts, radius, spacing, type as typo, useTheme } from '@/theme';
 import type { Category, VaultEntry } from '@/types/vault';
 
 type Filter = 'all' | 'favorites' | Category;
@@ -63,7 +63,7 @@ export default function VaultScreen() {
           </View>
           <PressableScale haptic="medium" onPress={() => router.push('/new')}>
             <LinearGradient
-              colors={[...theme.colors.heroGradient]}
+              colors={theme.colors.heroGradient}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 1 }}
               style={styles.fab}
@@ -172,6 +172,7 @@ const styles = StyleSheet.create({
   },
   searchInput: {
     flex: 1,
+    fontFamily: fonts.regular,
     fontSize: 15,
     paddingVertical: 11,
   },
