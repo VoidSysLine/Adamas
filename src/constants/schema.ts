@@ -66,6 +66,16 @@ export const WIFI_ENCRYPTION_OPTIONS: readonly SelectOption[] = [
   { value: 'none', label: 'wifiOpen' },
 ];
 
+export const LOCK_TYPE_OPTIONS: readonly SelectOption[] = [
+  { value: 'safe', label: 'lockSafe' },
+  { value: 'alarm', label: 'lockAlarm' },
+  { value: 'door', label: 'lockDoor' },
+  { value: 'gate', label: 'lockGate' },
+  { value: 'garage', label: 'lockGarage' },
+  { value: 'locker', label: 'lockLocker' },
+  { value: 'other', label: 'lockOther' },
+];
+
 interface KindMeta<K extends EntryKind> {
   category: Category;
   icon: IoniconName;
@@ -132,6 +142,17 @@ export const KIND_REGISTRY: { [K in EntryKind]: KindMeta<K> } = {
       { key: 'authority', label: 'authority', type: 'text', hint: 'authorityExample' },
     ],
   },
+  vehicle: {
+    category: 'documents',
+    icon: 'car-sport-outline',
+    fields: [
+      { key: 'model', label: 'vehicleModel', type: 'text', hint: 'vehicleModelExample' },
+      { key: 'licensePlate', label: 'licensePlate', type: 'text', mask: 'upperText', hint: 'licensePlateExample' },
+      { key: 'vin', label: 'vin', type: 'code', mask: 'vin', hint: 'vinExample' },
+      { key: 'inspectionDate', label: 'inspectionDate', type: 'date', expiry: true },
+      { key: 'insuranceNumber', label: 'insuranceNumber', type: 'code', hint: 'insuranceNumberExample' },
+    ],
+  },
   taxId: {
     category: 'documents',
     icon: 'document-text-outline',
@@ -139,6 +160,15 @@ export const KIND_REGISTRY: { [K in EntryKind]: KindMeta<K> } = {
       { key: 'number', label: 'taxId', type: 'number', mask: 'taxIdDe', hint: 'taxIdExample', secure: true },
       { key: 'taxNumber', label: 'taxNumber', type: 'code', mask: 'taxNumberDe', hint: 'taxNumberExample', secure: true },
       { key: 'taxOffice', label: 'taxOffice', type: 'text', hint: 'taxOfficeExample' },
+    ],
+  },
+  pension: {
+    category: 'documents',
+    icon: 'umbrella-outline',
+    fields: [
+      { key: 'number', label: 'rvnr', type: 'text', mask: 'svnrDe', hint: 'ssnExample', secure: true },
+      { key: 'provider', label: 'pensionProvider', type: 'text', hint: 'pensionProviderExample' },
+      { key: 'referenceNumber', label: 'referenceNumber', type: 'code', hint: 'referenceNumberExample' },
     ],
   },
   socialSecurity: {
@@ -212,6 +242,34 @@ export const KIND_REGISTRY: { [K in EntryKind]: KindMeta<K> } = {
       { key: 'privateKey', label: 'privateKey', type: 'multiline', hint: 'privateKeyExample', secure: true },
     ],
   },
+  softwareLicense: {
+    category: 'tech',
+    icon: 'cube-outline',
+    fields: [
+      { key: 'licenseKey', label: 'licenseKey', type: 'code', hint: 'licenseKeyExample', secure: true },
+      { key: 'licensedTo', label: 'licensedTo', type: 'text', hint: 'licensedToExample' },
+      { key: 'version', label: 'version', type: 'text', hint: 'versionExample' },
+      { key: 'purchaseDate', label: 'purchaseDate', type: 'date' },
+      { key: 'url', label: 'url', type: 'url', hint: 'urlExample' },
+    ],
+  },
+  apiKey: {
+    category: 'tech',
+    icon: 'code-slash-outline',
+    fields: [
+      { key: 'key', label: 'apiKeyValue', type: 'code', hint: 'apiKeyExample', secure: true },
+      { key: 'secret', label: 'apiSecret', type: 'code', hint: 'apiSecretExample', secure: true },
+      { key: 'url', label: 'apiUrl', type: 'url', hint: 'apiUrlExample' },
+    ],
+  },
+  accessCode: {
+    category: 'tech',
+    icon: 'keypad-outline',
+    fields: [
+      { key: 'lockType', label: 'lockType', type: 'select', options: LOCK_TYPE_OPTIONS },
+      { key: 'code', label: 'accessCodeValue', type: 'pin', hint: 'accessCodeExample', secure: true, generator: 'pin' },
+    ],
+  },
   note: {
     category: 'notes',
     icon: 'reader-outline',
@@ -232,10 +290,14 @@ export const CATEGORIES: Record<Category, CategoryMeta> = {
   documents: {
     icon: 'id-card-outline',
     gradient: ['#FDE68A', '#F59E0B'],
-    kinds: ['nationalId', 'driversLicense', 'passport', 'taxId', 'socialSecurity'],
+    kinds: ['nationalId', 'driversLicense', 'passport', 'vehicle', 'taxId', 'socialSecurity', 'pension'],
   },
   finance: { icon: 'card-outline', gradient: ['#6EE7B7', '#10B981'], kinds: ['creditCard', 'bankAccount', 'crypto'] },
-  tech: { icon: 'hardware-chip-outline', gradient: ['#A5B4FC', '#6366F1'], kinds: ['wifi', 'sim', 'server'] },
+  tech: {
+    icon: 'hardware-chip-outline',
+    gradient: ['#A5B4FC', '#6366F1'],
+    kinds: ['wifi', 'sim', 'server', 'softwareLicense', 'apiKey', 'accessCode'],
+  },
   notes: { icon: 'reader-outline', gradient: ['#FDA4AF', '#F43F5E'], kinds: ['note'] },
 };
 

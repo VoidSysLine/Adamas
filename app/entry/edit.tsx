@@ -21,11 +21,16 @@ import type { EntryDataMap, EntryKind } from '@/types/vault';
 const TITLE_EXAMPLES: Partial<Record<EntryKind, string>> = {
   login: 'GitHub',
   identity: 'Max Mustermann',
+  vehicle: 'BMW 320d',
+  pension: 'Deutsche Rentenversicherung',
   creditCard: 'Visa Gold',
   bankAccount: 'Girokonto',
   crypto: 'Bitcoin Wallet',
   wifi: 'Zuhause',
   server: 'Homelab',
+  softwareLicense: 'Windows 11 Pro',
+  apiKey: 'OpenAI API',
+  accessCode: 'Haustür',
   note: 'Tresorcode',
 };
 
@@ -126,7 +131,7 @@ export default function EditEntry() {
                 placeholder={t('edit.pickDate')}
                 doneLabel={t('common.done')}
                 locale={dateLocale}
-                maximumFuture={field.key === 'birthDate'}
+                maximumFuture={field.key === 'birthDate' || field.key === 'purchaseDate'}
               />
             );
           }

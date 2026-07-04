@@ -17,14 +17,19 @@ export type EntryKind =
   | 'nationalId'
   | 'driversLicense'
   | 'passport'
+  | 'vehicle'
   | 'taxId'
   | 'socialSecurity'
+  | 'pension'
   | 'creditCard'
   | 'bankAccount'
   | 'crypto'
   | 'wifi'
   | 'sim'
   | 'server'
+  | 'softwareLicense'
+  | 'apiKey'
+  | 'accessCode'
   | 'note';
 
 export type Category = 'logins' | 'identity' | 'documents' | 'finance' | 'tech' | 'notes';
@@ -70,12 +75,30 @@ export interface PassportData {
   authority?: string;
 }
 
+export interface VehicleData {
+  /** Make & model, e.g. "BMW 320d". */
+  model?: string;
+  licensePlate?: string;
+  /** VIN — 17 chars, letters I/O/Q excluded by standard. */
+  vin?: string;
+  /** Next general inspection (HU/TÜV/MOT) — feeds the expiry audit. */
+  inspectionDate?: string;
+  insuranceNumber?: string;
+}
+
 export interface TaxIdData {
   /** Steuer-Identifikationsnummer (IdNr, lifelong, 11 digits). */
   number?: string;
   /** Steuernummer (assigned by the local tax office, format varies by state). */
   taxNumber?: string;
   taxOffice?: string;
+}
+
+export interface PensionData {
+  /** Rentenversicherungsnummer — same format as the German SVNR. */
+  number?: string;
+  provider?: string;
+  referenceNumber?: string;
 }
 
 export interface SocialSecurityData {
@@ -133,6 +156,27 @@ export interface ServerData {
   privateKey?: string;
 }
 
+export interface SoftwareLicenseData {
+  licenseKey?: string;
+  licensedTo?: string;
+  version?: string;
+  purchaseDate?: string;
+  url?: string;
+}
+
+export interface ApiKeyData {
+  key?: string;
+  secret?: string;
+  /** API endpoint or console URL. */
+  url?: string;
+}
+
+export interface AccessCodeData {
+  /** What the code opens (safe, alarm, door, …) — select options. */
+  lockType?: string;
+  code?: string;
+}
+
 export interface NoteData {
   body?: string;
 }
@@ -143,14 +187,19 @@ export interface EntryDataMap {
   nationalId: NationalIdData;
   driversLicense: DriversLicenseData;
   passport: PassportData;
+  vehicle: VehicleData;
   taxId: TaxIdData;
   socialSecurity: SocialSecurityData;
+  pension: PensionData;
   creditCard: CreditCardData;
   bankAccount: BankAccountData;
   crypto: CryptoData;
   wifi: WifiData;
   sim: SimData;
   server: ServerData;
+  softwareLicense: SoftwareLicenseData;
+  apiKey: ApiKeyData;
+  accessCode: AccessCodeData;
   note: NoteData;
 }
 

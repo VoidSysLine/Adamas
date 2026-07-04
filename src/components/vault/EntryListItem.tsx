@@ -36,6 +36,14 @@ function subtitle(entry: VaultEntry): string {
       return entry.data.phoneNumber ?? '';
     case 'server':
       return entry.data.host ?? '';
+    case 'vehicle':
+      return [entry.data.licensePlate, entry.data.model].filter(Boolean).join(' · ');
+    case 'pension':
+      return entry.data.provider ?? '';
+    case 'softwareLicense':
+      return [entry.data.licensedTo, entry.data.version].filter(Boolean).join(' · ');
+    case 'apiKey':
+      return entry.data.url ?? '';
     case 'note':
       return entry.data.body?.split('\n')[0] ?? '';
     default:

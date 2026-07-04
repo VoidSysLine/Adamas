@@ -16,6 +16,7 @@ export type MaskKind =
   | 'taxNumberDe'
   | 'svnrDe'
   | 'base32'
+  | 'vin'
   | 'digits4'
   | 'digits5'
   | 'digits8'
@@ -123,6 +124,11 @@ export const MASKS: Record<MaskKind, Mask> = {
   // German PLZ.
   digits5: {
     strip: (s) => onlyDigits(s).slice(0, 5),
+    format: (raw) => raw,
+  },
+  // Vehicle identification number: 17 chars, I/O/Q excluded by ISO 3779.
+  vin: {
+    strip: (s) => s.toUpperCase().replace(/[^A-HJ-NPR-Z0-9]/g, '').slice(0, 17),
     format: (raw) => raw,
   },
   digits8: {
