@@ -3,14 +3,17 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useMemo, useState } from 'react';
 import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { DateField } from '@/components/ui/DateField';
 import { FormField } from '@/components/ui/FormField';
 import { GradientButton } from '@/components/ui/GradientButton';
 import { PressableScale, triggerHaptic } from '@/components/ui/PressableScale';
+import { SelectField } from '@/components/ui/SelectField';
 import { StrengthMeter } from '@/components/ui/StrengthMeter';
 import { useToast } from '@/components/ui/Toast';
 import { fieldsOf } from '@/constants/schema';
-import { useT } from '@/i18n';
+import { resolveLanguage, useT } from '@/i18n';
 import { DEFAULT_PASSWORD, generatePassword, generatePin } from '@/lib/generator';
+import { useSettings } from '@/store/settingsStore';
 import { useVault } from '@/store/vaultStore';
 import { spacing, type as typo, useTheme } from '@/theme';
 import type { EntryDataMap, EntryKind } from '@/types/vault';
@@ -38,6 +41,8 @@ export default function EditEntry() {
   const addEntry = useVault((s) => s.addEntry);
   const updateEntry = useVault((s) => s.updateEntry);
 
+  const language = resolveLanguage(useSettings((s) => s.language));
+  const dateLocale = language === 'de' ? 'de-DE' : 'en-US';
   const kind = (existing?.kind ?? params.kind ?? 'login') as EntryKind;
   const fields = fieldsOf(kind);
 
@@ -106,29 +111,61 @@ export default function EditEntry() {
         />
         {titleError && <Text style={[typo.caption, { color: theme.colors.danger }]}>{t('edit.required')}</Text>}
 
-        {fields.map((field) => (
-          <View key={field.key} style={styles.fieldBlock}>
-            <FormField
-              label={t(`fields.${field.label}` as Parameters<typeof t>[0])}
-              value={data[field.key] ?? ''}
-              onChangeText={(text) => setField(field.key, text)}
-              fieldType={field.type}
-              placeholder={
-                field.type === 'date' ? 'TT.MM.JJJJ' : field.type === 'monthYear' ? 'MM/JJ' : undefined
-              }
-              onGenerate={
-                field.generator === 'password'
-                  ? () => setField(field.key, generatePassword(DEFAULT_PASSWORD))
-                  : field.generator === 'pin'
-                    ? () => setField(field.key, generatePin(field.key === 'pin' ? 4 : 6))
-                    : undefined
-              }
-            />
-            {field.type === 'password' && field.key === passwordKey && (
-              <StrengthMeter password={data[field.key] ?? ''} />
-            )}
-          </View>
-        ))}
+        {fields.map((field) => {
+          const fieldLabel = t(`fields.${field.label}` as Parameters<typeof t>[0]);
+          const hint = field.hint ? t(`hints.${field.hint}` as Parameters<typeof t>[0]) : undefined;
+
+          if (field.type === 'date') {
+            return (
+              <DateField
+                key={field.key}
+                label={fieldLabel}
+                value={data[field.key] ?? ''}
+                onChange={(value) => setField(field.key, value)}
+                placeholder={t('edit.pickDate')}
+                doneLabel={t('common.done')}
+                locale={dateLocale}
+                maximumFuture={field.key === 'birthDate'}
+              />
+            );
+          }
+
+          if (field.type === 'select' && field.options) {
+            return (
+              <SelectField
+                key={field.key}
+                label={fieldLabel}
+                value={data[field.key] ?? ''}
+                options={field.options}
+                onChange={(value) => setField(field.key, value)}
+                labelFor={(key) => t(`options.${key}` as Parameters<typeof t>[0])}
+              />
+            );
+          }
+
+          return (
+            <View key={field.key} style={styles.fieldBlock}>
+              <FormField
+                label={fieldLabel}
+                value={data[field.key] ?? ''}
+                onChangeText={(text) => setField(field.key, text)}
+                fieldType={field.type}
+                mask={field.mask}
+                placeholder={hint}
+                onGenerate={
+                  field.generator === 'password'
+                    ? () => setField(field.key, generatePassword(DEFAULT_PASSWORD))
+                    : field.generator === 'pin'
+                      ? () => setField(field.key, generatePin(field.key === 'pin' ? 4 : 6))
+                      : undefined
+                }
+              />
+              {field.type === 'password' && field.key === passwordKey && (
+                <StrengthMeter password={data[field.key] ?? ''} />
+              )}
+            </View>
+          );
+        })}
 
         <FormField
           label={t('fields.notes')}

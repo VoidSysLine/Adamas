@@ -1,5 +1,6 @@
 import type { ComponentProps } from 'react';
 import { Ionicons } from '@expo/vector-icons';
+import type { MaskKind } from '@/lib/masks';
 import type { Category, EntryDataMap, EntryKind } from '@/types/vault';
 
 export type IoniconName = ComponentProps<typeof Ionicons>['name'];
@@ -15,13 +16,27 @@ export type FieldType =
   | 'monthYear'
   | 'number'
   | 'phone'
+  | 'select'
   | 'multiline';
+
+export interface SelectOption {
+  /** Stored value. */
+  value: string;
+  /** i18n key under `options.`. */
+  label: string;
+}
 
 export interface FieldDef<K extends EntryKind = EntryKind> {
   key: keyof EntryDataMap[K] & string;
   /** i18n key under `fields.` */
   label: string;
   type: FieldType;
+  /** Live input mask (grouping, uppercasing, digit limits). */
+  mask?: MaskKind;
+  /** i18n key under `hints.` — a concrete format example shown as placeholder. */
+  hint?: string;
+  /** Chips shown for `select` fields. */
+  options?: readonly SelectOption[];
   /** Masked at rest in the detail view; revealed on demand. */
   secure?: boolean;
   /** Hidden from the detail view copy rows (only shown via dedicated UI). */
@@ -31,6 +46,21 @@ export interface FieldDef<K extends EntryKind = EntryKind> {
   /** Marks the field used for "expired document/card" audits. */
   expiry?: boolean;
 }
+
+export const GENDER_OPTIONS: readonly SelectOption[] = [
+  { value: 'female', label: 'genderFemale' },
+  { value: 'male', label: 'genderMale' },
+  { value: 'diverse', label: 'genderDiverse' },
+  { value: 'unspecified', label: 'genderUnspecified' },
+];
+
+export const WIFI_ENCRYPTION_OPTIONS: readonly SelectOption[] = [
+  { value: 'WPA3', label: 'wpa3' },
+  { value: 'WPA2', label: 'wpa2' },
+  { value: 'WPA', label: 'wpa' },
+  { value: 'WEP', label: 'wep' },
+  { value: 'none', label: 'wifiOpen' },
+];
 
 interface KindMeta<K extends EntryKind> {
   category: Category;
@@ -48,121 +78,121 @@ export const KIND_REGISTRY: { [K in EntryKind]: KindMeta<K> } = {
     category: 'logins',
     icon: 'globe-outline',
     fields: [
-      { key: 'url', label: 'url', type: 'url' },
-      { key: 'username', label: 'username', type: 'text' },
-      { key: 'email', label: 'email', type: 'email' },
+      { key: 'url', label: 'url', type: 'url', hint: 'urlExample' },
+      { key: 'username', label: 'username', type: 'text', hint: 'usernameExample' },
+      { key: 'email', label: 'email', type: 'email', hint: 'emailExample' },
       { key: 'password', label: 'password', type: 'password', secure: true, generator: 'password' },
-      { key: 'totpSeed', label: 'totpSeed', type: 'totp', secure: true },
+      { key: 'totpSeed', label: 'totpSeed', type: 'totp', mask: 'base32', hint: 'totpExample', secure: true },
     ],
   },
   identity: {
     category: 'identity',
     icon: 'person-outline',
     fields: [
-      { key: 'firstName', label: 'firstName', type: 'text' },
-      { key: 'lastName', label: 'lastName', type: 'text' },
+      { key: 'firstName', label: 'firstName', type: 'text', hint: 'firstNameExample' },
+      { key: 'lastName', label: 'lastName', type: 'text', hint: 'lastNameExample' },
       { key: 'birthDate', label: 'birthDate', type: 'date' },
-      { key: 'gender', label: 'gender', type: 'text' },
+      { key: 'gender', label: 'gender', type: 'select', options: GENDER_OPTIONS },
     ],
   },
   nationalId: {
     category: 'documents',
     icon: 'id-card-outline',
     fields: [
-      { key: 'number', label: 'documentNumber', type: 'text' },
+      { key: 'number', label: 'documentNumber', type: 'text', mask: 'upperAlnum', hint: 'nationalIdExample' },
       { key: 'expiryDate', label: 'expiryDate', type: 'date', expiry: true },
-      { key: 'authority', label: 'authority', type: 'text' },
+      { key: 'authority', label: 'authority', type: 'text', hint: 'authorityExample' },
     ],
   },
   driversLicense: {
     category: 'documents',
     icon: 'car-outline',
     fields: [
-      { key: 'number', label: 'documentNumber', type: 'text' },
-      { key: 'classes', label: 'licenseClasses', type: 'text' },
+      { key: 'number', label: 'documentNumber', type: 'text', mask: 'upperAlnum', hint: 'licenseNumberExample' },
+      { key: 'classes', label: 'licenseClasses', type: 'text', mask: 'upperText', hint: 'licenseClassesExample' },
       { key: 'expiryDate', label: 'expiryDate', type: 'date', expiry: true },
-      { key: 'authority', label: 'authority', type: 'text' },
+      { key: 'authority', label: 'authority', type: 'text', hint: 'authorityExample' },
     ],
   },
   passport: {
     category: 'documents',
     icon: 'airplane-outline',
     fields: [
-      { key: 'number', label: 'documentNumber', type: 'text' },
-      { key: 'nationality', label: 'nationality', type: 'text' },
+      { key: 'number', label: 'documentNumber', type: 'text', mask: 'upperAlnum', hint: 'passportExample' },
+      { key: 'nationality', label: 'nationality', type: 'text', hint: 'nationalityExample' },
       { key: 'expiryDate', label: 'expiryDate', type: 'date', expiry: true },
-      { key: 'authority', label: 'authority', type: 'text' },
+      { key: 'authority', label: 'authority', type: 'text', hint: 'authorityExample' },
     ],
   },
   taxId: {
     category: 'documents',
     icon: 'document-text-outline',
-    fields: [{ key: 'number', label: 'taxNumber', type: 'text', secure: true }],
+    fields: [{ key: 'number', label: 'taxNumber', type: 'text', mask: 'taxIdDe', hint: 'taxIdExample', secure: true }],
   },
   socialSecurity: {
     category: 'documents',
     icon: 'medkit-outline',
     fields: [
-      { key: 'number', label: 'ssn', type: 'text', secure: true },
-      { key: 'provider', label: 'provider', type: 'text' },
+      { key: 'number', label: 'ssn', type: 'text', mask: 'svnrDe', hint: 'ssnExample', secure: true },
+      { key: 'provider', label: 'provider', type: 'text', hint: 'insuranceExample' },
     ],
   },
   creditCard: {
     category: 'finance',
     icon: 'card-outline',
     fields: [
-      { key: 'holder', label: 'cardHolder', type: 'text' },
-      { key: 'number', label: 'cardNumber', type: 'number', secure: true },
-      { key: 'expiryDate', label: 'expiryDate', type: 'monthYear', expiry: true },
-      { key: 'cvv', label: 'cvv', type: 'pin', secure: true },
-      { key: 'pin', label: 'pin', type: 'pin', secure: true, generator: 'pin' },
+      { key: 'holder', label: 'cardHolder', type: 'text', mask: 'upperText', hint: 'cardHolderExample' },
+      { key: 'number', label: 'cardNumber', type: 'number', mask: 'cardNumber', hint: 'cardNumberExample', secure: true },
+      { key: 'expiryDate', label: 'expiryDate', type: 'monthYear', mask: 'monthYear', hint: 'monthYearExample', expiry: true },
+      { key: 'cvv', label: 'cvv', type: 'pin', mask: 'digits4', hint: 'cvvExample', secure: true },
+      { key: 'pin', label: 'pin', type: 'pin', mask: 'digits4', hint: 'pinExample', secure: true, generator: 'pin' },
     ],
   },
   bankAccount: {
     category: 'finance',
     icon: 'business-outline',
     fields: [
-      { key: 'holder', label: 'accountHolder', type: 'text' },
-      { key: 'iban', label: 'iban', type: 'text', secure: true },
-      { key: 'bic', label: 'bic', type: 'text' },
-      { key: 'bankName', label: 'bankName', type: 'text' },
+      { key: 'holder', label: 'accountHolder', type: 'text', hint: 'accountHolderExample' },
+      { key: 'iban', label: 'iban', type: 'text', mask: 'iban', hint: 'ibanExample', secure: true },
+      { key: 'bic', label: 'bic', type: 'text', mask: 'bic', hint: 'bicExample' },
+      { key: 'bankName', label: 'bankName', type: 'text', hint: 'bankNameExample' },
     ],
   },
   wifi: {
     category: 'tech',
     icon: 'wifi-outline',
     fields: [
-      { key: 'ssid', label: 'ssid', type: 'text' },
+      { key: 'ssid', label: 'ssid', type: 'text', hint: 'ssidExample' },
       { key: 'password', label: 'password', type: 'password', secure: true, generator: 'password' },
-      { key: 'encryption', label: 'encryption', type: 'text' },
+      { key: 'encryption', label: 'encryption', type: 'select', options: WIFI_ENCRYPTION_OPTIONS },
     ],
   },
   sim: {
     category: 'tech',
     icon: 'cellular-outline',
     fields: [
-      { key: 'phoneNumber', label: 'phoneNumber', type: 'phone' },
-      { key: 'pin', label: 'pin', type: 'pin', secure: true, generator: 'pin' },
-      { key: 'puk', label: 'puk', type: 'pin', secure: true },
-      { key: 'iccid', label: 'iccid', type: 'number' },
-      { key: 'provider', label: 'provider', type: 'text' },
+      { key: 'phoneNumber', label: 'phoneNumber', type: 'phone', mask: 'phone', hint: 'phoneExample' },
+      { key: 'pin', label: 'pin', type: 'pin', mask: 'digits4', hint: 'simPinExample', secure: true, generator: 'pin' },
+      { key: 'puk', label: 'puk', type: 'pin', mask: 'digits8', hint: 'pukExample', secure: true },
+      { key: 'iccid', label: 'iccid', type: 'number', mask: 'iccid', hint: 'iccidExample' },
+      { key: 'provider', label: 'provider', type: 'text', hint: 'simProviderExample' },
     ],
   },
   server: {
     category: 'tech',
     icon: 'terminal-outline',
     fields: [
-      { key: 'host', label: 'host', type: 'url' },
-      { key: 'port', label: 'port', type: 'number' },
-      { key: 'username', label: 'username', type: 'text' },
+      { key: 'host', label: 'host', type: 'url', hint: 'hostExample' },
+      { key: 'port', label: 'port', type: 'number', mask: 'port', hint: 'portExample' },
+      { key: 'username', label: 'username', type: 'text', hint: 'serverUserExample' },
       { key: 'password', label: 'password', type: 'password', secure: true, generator: 'password' },
-      { key: 'privateKey', label: 'privateKey', type: 'multiline', secure: true },
+      { key: 'privateKey', label: 'privateKey', type: 'multiline', hint: 'privateKeyExample', secure: true },
     ],
   },
   note: {
     category: 'notes',
     icon: 'reader-outline',
-    fields: [{ key: 'body', label: 'noteBody', type: 'multiline' }],
+    fields: [{ key: 'body', label: 'noteBody', type: 'multiline', hint: 'noteExample' }],
   },
 };
 

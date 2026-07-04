@@ -2,6 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import React, { useState } from 'react';
 import { StyleSheet, Text, TextInput, View, type KeyboardTypeOptions } from 'react-native';
 import type { FieldType } from '@/constants/schema';
+import { applyMask, MASKS, type MaskKind } from '@/lib/masks';
 import { fonts, radius, spacing, type as typo, useTheme } from '@/theme';
 import { PressableScale, triggerHaptic } from './PressableScale';
 
@@ -11,6 +12,8 @@ interface Props {
   onChangeText: (text: string) => void;
   fieldType?: FieldType;
   placeholder?: string;
+  /** Live input mask (grouping / uppercasing / digit limits). */
+  mask?: MaskKind;
   autoFocus?: boolean;
   /** Renders a generator action inside the field. */
   onGenerate?: () => void;
@@ -33,12 +36,21 @@ function keyboardFor(type: FieldType): KeyboardTypeOptions {
 }
 
 /** Schema-aware form input with floating label, secure toggle and generator slot. */
-export function FormField({ label, value, onChangeText, fieldType = 'text', placeholder, autoFocus, onGenerate }: Props) {
+export function FormField({ label, value, onChangeText, fieldType = 'text', placeholder, mask, autoFocus, onGenerate }: Props) {
   const theme = useTheme();
   const [focused, setFocused] = useState(false);
-  const [revealed, setRevealed] = useState(false);
+  // Masked fields (IBAN, card no., …) stay visible while typing so the live
+  // grouping is legible; free secrets like passwords start hidden.
+  const [revealed, setRevealed] = useState(!!mask);
   const secure = fieldType === 'password' || fieldType === 'pin' || fieldType === 'totp';
   const multiline = fieldType === 'multiline';
+  // Grouped masks read best in a monospaced face so digits align.
+  const monoDisplay = !!mask && mask !== 'phone' && mask !== 'upperText';
+
+  const handleChange = (next: string) => {
+    if (mask) onChangeText(applyMask(MASKS[mask], value, next));
+    else onChangeText(next);
+  };
 
   return (
     <View style={styles.container}>
@@ -57,12 +69,12 @@ export function FormField({ label, value, onChangeText, fieldType = 'text', plac
       >
         <TextInput
           value={value}
-          onChangeText={onChangeText}
+          onChangeText={handleChange}
           placeholder={placeholder}
           placeholderTextColor={theme.colors.textTertiary}
           keyboardType={keyboardFor(fieldType)}
-          autoCapitalize={fieldType === 'text' ? 'sentences' : 'none'}
-          autoCorrect={fieldType === 'text' || fieldType === 'multiline'}
+          autoCapitalize={mask ? 'none' : fieldType === 'text' ? 'sentences' : 'none'}
+          autoCorrect={!mask && (fieldType === 'text' || fieldType === 'multiline')}
           secureTextEntry={secure && !revealed}
           multiline={multiline}
           autoFocus={autoFocus}
@@ -71,7 +83,7 @@ export function FormField({ label, value, onChangeText, fieldType = 'text', plac
           style={[
             styles.input,
             { color: theme.colors.text },
-            secure && { fontFamily: fonts.mono },
+            (secure || monoDisplay) && { fontFamily: fonts.mono },
             multiline && styles.multilineInput,
           ]}
         />

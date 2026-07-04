@@ -7,7 +7,10 @@ import { useCopy } from '@/components/ui/Toast';
 
 interface Props {
   label: string;
+  /** Human-readable value shown in the row. */
   value: string;
+  /** Value placed on the clipboard, if different from `value` (e.g. IBAN without spaces). */
+  copyValue?: string;
   secure?: boolean;
   mono?: boolean;
   multiline?: boolean;
@@ -17,17 +20,18 @@ interface Props {
  * Detail-view row: tap anywhere to copy; secure values are masked with a
  * dot pattern and can be revealed via the eye toggle.
  */
-export function CopyRow({ label, value, secure, mono, multiline }: Props) {
+export function CopyRow({ label, value, copyValue, secure, mono, multiline }: Props) {
   const theme = useTheme();
   const copy = useCopy();
   const [revealed, setRevealed] = useState(false);
 
   const masked = secure && !revealed;
   const display = masked ? '•'.repeat(Math.min(Math.max(value.length, 8), 14)) : value;
+  const clipboard = copyValue ?? value;
 
   return (
     <View style={styles.row}>
-      <PressableScale haptic="none" style={styles.copyArea} onPress={() => copy(label, value)}>
+      <PressableScale haptic="none" style={styles.copyArea} onPress={() => copy(label, clipboard)}>
         <Text style={[typo.micro, { color: theme.colors.textTertiary }]}>{label}</Text>
         <Text
           style={[
@@ -57,7 +61,7 @@ export function CopyRow({ label, value, secure, mono, multiline }: Props) {
           />
         </PressableScale>
       )}
-      <PressableScale haptic="none" style={styles.iconButton} onPress={() => copy(label, value)}>
+      <PressableScale haptic="none" style={styles.iconButton} onPress={() => copy(label, clipboard)}>
         <Ionicons name="copy-outline" size={18} color={theme.colors.accent} />
       </PressableScale>
     </View>

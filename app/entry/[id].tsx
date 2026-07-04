@@ -10,9 +10,10 @@ import { useToast } from '@/components/ui/Toast';
 import { CopyRow } from '@/components/vault/CopyRow';
 import { FaviconBadge } from '@/components/vault/FaviconBadge';
 import { TotpRing } from '@/components/vault/TotpRing';
-import { fieldsOf } from '@/constants/schema';
+import { fieldsOf, type FieldDef } from '@/constants/schema';
 import { useT, resolveLanguage } from '@/i18n';
-import { formatTimestamp } from '@/lib/dates';
+import { formatTimestamp, parseFieldDate } from '@/lib/dates';
+import { MASKS } from '@/lib/masks';
 import { useSettings } from '@/store/settingsStore';
 import { useVault } from '@/store/vaultStore';
 import { radius, spacing, type as typo, useTheme } from '@/theme';
@@ -33,6 +34,27 @@ export default function EntryDetail() {
 
   const data = entry.data as Record<string, string | undefined>;
   const fields = fieldsOf(entry.kind).filter((f) => !!data[f.key]);
+  const dateLocale = language === 'de' ? 'de-DE' : 'en-US';
+
+  /** Resolves the shown value (localized dates/options) and the raw copy value. */
+  const present = (field: FieldDef): { display: string; copyValue?: string } => {
+    const raw = (data[field.key] as string).trim();
+    if (field.type === 'date') {
+      const parsed = parseFieldDate(raw);
+      return parsed
+        ? { display: parsed.toLocaleDateString(dateLocale, { day: '2-digit', month: 'long', year: 'numeric' }), copyValue: raw }
+        : { display: raw };
+    }
+    if (field.type === 'select' && field.options) {
+      const option = field.options.find((o) => o.value === raw);
+      return { display: option ? t(`options.${option.label}` as Parameters<typeof t>[0]) : raw };
+    }
+    // Grouped masks: show the grouped value, copy the unspaced raw form.
+    if (field.mask && MASKS[field.mask].copyRaw) {
+      return { display: raw, copyValue: MASKS[field.mask].strip(raw) };
+    }
+    return { display: raw };
+  };
 
   const onDelete = () => {
     triggerHaptic('warning');
@@ -97,20 +119,24 @@ export default function EntryDetail() {
             <GlassCard style={styles.card}>
               {fields
                 .filter((f) => f.type !== 'totp')
-                .map((field, index, visible) => (
-                  <View key={field.key}>
-                    <CopyRow
-                      label={t(`fields.${field.label}` as Parameters<typeof t>[0])}
-                      value={data[field.key] as string}
-                      secure={field.secure}
-                      mono={field.type === 'number' || field.type === 'pin'}
-                      multiline={field.type === 'multiline'}
-                    />
-                    {index < visible.length - 1 && (
-                      <View style={[styles.divider, { backgroundColor: theme.colors.border }]} />
-                    )}
-                  </View>
-                ))}
+                .map((field, index, visible) => {
+                  const { display, copyValue } = present(field);
+                  return (
+                    <View key={field.key}>
+                      <CopyRow
+                        label={t(`fields.${field.label}` as Parameters<typeof t>[0])}
+                        value={display}
+                        copyValue={copyValue}
+                        secure={field.secure}
+                        mono={field.type === 'number' || field.type === 'pin' || !!field.mask}
+                        multiline={field.type === 'multiline'}
+                      />
+                      {index < visible.length - 1 && (
+                        <View style={[styles.divider, { backgroundColor: theme.colors.border }]} />
+                      )}
+                    </View>
+                  );
+                })}
             </GlassCard>
           </Animated.View>
         )}
