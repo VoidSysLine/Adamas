@@ -35,6 +35,19 @@ const WEIGHTS: Record<AuditIssueType, number> = {
   noTotp: 2,
 };
 
+/**
+ * Per-category penalty ceiling. "No 2FA" is informational — without a cap,
+ * a large imported vault would flatline the score at 0 from this alone.
+ */
+const PENALTY_CAPS: Partial<Record<AuditIssueType, number>> = {
+  noTotp: 15,
+};
+
+/** 2FA handled outside Adamas, or the service simply offers none (N/A). */
+function twoFactorHandledElsewhere(twoFactor: string | undefined): boolean {
+  return twoFactor === 'external' || twoFactor === 'sms' || twoFactor === 'unavailable';
+}
+
 function passwordsOf(entry: VaultEntry): string[] {
   const data = entry.data as Record<string, string | undefined>;
   return fieldsOf(entry.kind)
@@ -91,7 +104,12 @@ export function runAudit(entries: VaultEntry[], now: number = Date.now()): Audit
       }
     }
 
-    if (entry.kind === 'login' && entry.data.password && !entry.data.totpSeed) {
+    if (
+      entry.kind === 'login' &&
+      entry.data.password &&
+      !entry.data.totpSeed &&
+      !twoFactorHandledElsewhere(entry.data.twoFactor)
+    ) {
       findings.noTotp.push({ type: 'noTotp', entry });
     }
   }
@@ -110,7 +128,8 @@ export function runAudit(entries: VaultEntry[], now: number = Date.now()): Audit
   let totalIssues = 0;
   for (const type of Object.keys(findings) as AuditIssueType[]) {
     totalIssues += findings[type].length;
-    penalty += findings[type].length * WEIGHTS[type];
+    const typePenalty = findings[type].length * WEIGHTS[type];
+    penalty += Math.min(typePenalty, PENALTY_CAPS[type] ?? Number.POSITIVE_INFINITY);
   }
 
   return {

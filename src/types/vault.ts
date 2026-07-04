@@ -42,6 +42,12 @@ export interface LoginData {
   password?: string;
   /** Base32 TOTP seed (otpauth secret). */
   totpSeed?: string;
+  /**
+   * 2FA status when the seed is NOT stored in Adamas:
+   * 'external' (authenticator app), 'sms' (SMS/email codes),
+   * 'unavailable' (service offers no 2FA → N/A for the audit).
+   */
+  twoFactor?: string;
 }
 
 export interface IdentityData {

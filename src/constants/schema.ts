@@ -66,6 +66,12 @@ export const WIFI_ENCRYPTION_OPTIONS: readonly SelectOption[] = [
   { value: 'none', label: 'wifiOpen' },
 ];
 
+export const TWO_FACTOR_OPTIONS: readonly SelectOption[] = [
+  { value: 'external', label: 'twoFactorExternal' },
+  { value: 'sms', label: 'twoFactorSms' },
+  { value: 'unavailable', label: 'twoFactorUnavailable' },
+];
+
 export const LOCK_TYPE_OPTIONS: readonly SelectOption[] = [
   { value: 'safe', label: 'lockSafe' },
   { value: 'alarm', label: 'lockAlarm' },
@@ -97,6 +103,7 @@ export const KIND_REGISTRY: { [K in EntryKind]: KindMeta<K> } = {
       { key: 'email', label: 'email', type: 'email', hint: 'emailExample' },
       { key: 'password', label: 'password', type: 'password', secure: true, generator: 'password' },
       { key: 'totpSeed', label: 'totpSeed', type: 'totp', mask: 'base32', hint: 'totpExample', secure: true },
+      { key: 'twoFactor', label: 'twoFactor', type: 'select', options: TWO_FACTOR_OPTIONS },
     ],
   },
   identity: {
