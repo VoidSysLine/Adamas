@@ -10,6 +10,7 @@ import { useToast } from '@/components/ui/Toast';
 import { CopyRow } from '@/components/vault/CopyRow';
 import { FaviconBadge } from '@/components/vault/FaviconBadge';
 import { TotpRing } from '@/components/vault/TotpRing';
+import { WifiQrCard } from '@/components/vault/WifiQrCard';
 import { fieldsOf, type FieldDef } from '@/constants/schema';
 import { useT, resolveLanguage } from '@/i18n';
 import { formatTimestamp, parseFieldDate } from '@/lib/dates';
@@ -111,6 +112,12 @@ export default function EntryDetail() {
             <GlassCard style={styles.card}>
               <TotpRing seed={entry.data.totpSeed} />
             </GlassCard>
+          </Animated.View>
+        )}
+
+        {entry.kind === 'wifi' && (
+          <Animated.View entering={FadeInDown.delay(80).springify().damping(18)}>
+            <WifiQrCard title={entry.title} data={entry.data} />
           </Animated.View>
         )}
 

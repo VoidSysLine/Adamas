@@ -1,9 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import DateTimePicker, { type DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import React, { useState } from 'react';
-import { Keyboard, Modal, Platform, StyleSheet, Text, View } from 'react-native';
-import Animated, { FadeIn, SlideInDown } from 'react-native-reanimated';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Keyboard, Modal, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 import { GradientButton } from './GradientButton';
 import { PressableScale, triggerHaptic } from './PressableScale';
 import { parseFieldDate } from '@/lib/dates';
@@ -45,7 +43,6 @@ export function DateField({
   minimumToday,
 }: Props) {
   const theme = useTheme();
-  const insets = useSafeAreaInsets();
   const [open, setOpen] = useState(false);
   const parsed = parseFieldDate(value);
   const [draft, setDraft] = useState<Date>(parsed ?? new Date(2000, 0, 1));
@@ -109,17 +106,15 @@ export function DateField({
 
       {Platform.OS === 'ios' && (
         <Modal visible={open} transparent animationType="fade" onRequestClose={() => setOpen(false)}>
-          <Animated.View entering={FadeIn.duration(150)} style={styles.backdrop}>
-            <PressableScale haptic="none" style={StyleSheet.absoluteFill} onPress={() => setOpen(false)} />
-            <Animated.View
-              entering={SlideInDown.springify().damping(18)}
+          {/* Centered card instead of a bottom sheet: immune to being clipped
+              by the home indicator, keyboard or pageSheet presentation, and no
+              Reanimated entering animations (unreliable inside native Modals). */}
+          <View style={styles.backdrop}>
+            <Pressable style={StyleSheet.absoluteFill} onPress={() => setOpen(false)} />
+            <View
               style={[
-                styles.sheet,
-                {
-                  backgroundColor: theme.colors.background,
-                  borderColor: theme.colors.border,
-                  paddingBottom: insets.bottom + spacing.lg,
-                },
+                styles.card,
+                { backgroundColor: theme.colors.background, borderColor: theme.colors.border },
               ]}
             >
               <Text style={[typo.headline, { color: theme.colors.text, textAlign: 'center' }]}>{label}</Text>
@@ -142,8 +137,8 @@ export function DateField({
                   setOpen(false);
                 }}
               />
-            </Animated.View>
-          </Animated.View>
+            </View>
+          </View>
         </Modal>
       )}
     </View>
@@ -168,15 +163,18 @@ const styles = StyleSheet.create({
   },
   backdrop: {
     flex: 1,
-    justifyContent: 'flex-end',
-    backgroundColor: 'rgba(0,0,0,0.45)',
+    justifyContent: 'center',
+    padding: spacing.xl,
+    backgroundColor: 'rgba(0,0,0,0.5)',
   },
-  sheet: {
+  card: {
     padding: spacing.lg,
-    borderTopLeftRadius: radius.xl,
-    borderTopRightRadius: radius.xl,
+    borderRadius: radius.xl,
     borderWidth: StyleSheet.hairlineWidth,
     gap: spacing.md,
+    width: '100%',
+    maxWidth: 380,
+    alignSelf: 'center',
   },
   iosPicker: {
     alignSelf: 'center',

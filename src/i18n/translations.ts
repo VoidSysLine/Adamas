@@ -199,6 +199,14 @@ export const de = {
     auditSub: 'Analyse deines Tresors',
     score: 'Sicherheits-Score',
   },
+  wifiQr: {
+    title: 'WLAN-QR-Code',
+    hint: 'Mit der Kamera scannen, um sich direkt mit dem Netzwerk zu verbinden.',
+    share: 'Teilen',
+    save: 'Speichern',
+    saved: 'In Fotos gespeichert',
+    permissionDenied: 'Kein Foto-Zugriff — bitte Berechtigung in den Einstellungen erteilen.',
+  },
   importer: {
     sectionTitle: 'Import & Export',
     bitwarden: 'Aus Bitwarden importieren',
@@ -498,6 +506,14 @@ export const en: Translations = {
     audit: 'Security Audit',
     auditSub: 'Analyze your vault',
     score: 'Security score',
+  },
+  wifiQr: {
+    title: 'Wi-Fi QR Code',
+    hint: 'Scan with a camera to join the network directly.',
+    share: 'Share',
+    save: 'Save',
+    saved: 'Saved to Photos',
+    permissionDenied: 'No photo access — please grant permission in Settings.',
   },
   importer: {
     sectionTitle: 'Import & Export',
