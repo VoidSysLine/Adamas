@@ -25,6 +25,11 @@ function subtitle(entry: VaultEntry): string {
       return entry.data.number ? `•••• ${entry.data.number.replace(/\s/g, '').slice(-4)}` : '';
     case 'bankAccount':
       return entry.data.iban ? `${entry.data.iban.slice(0, 4)} •••• ${entry.data.iban.replace(/\s/g, '').slice(-4)}` : '';
+    case 'crypto': {
+      const address = entry.data.address?.trim();
+      const short = address && address.length > 14 ? `${address.slice(0, 8)}…${address.slice(-5)}` : address;
+      return [entry.data.blockchain, short].filter(Boolean).join(' · ');
+    }
     case 'wifi':
       return entry.data.ssid ?? '';
     case 'sim':

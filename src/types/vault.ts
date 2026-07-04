@@ -21,6 +21,7 @@ export type EntryKind =
   | 'socialSecurity'
   | 'creditCard'
   | 'bankAccount'
+  | 'crypto'
   | 'wifi'
   | 'sim'
   | 'server'
@@ -43,6 +44,10 @@ export interface IdentityData {
   lastName?: string;
   birthDate?: string;
   gender?: string;
+  street?: string;
+  postalCode?: string;
+  city?: string;
+  country?: string;
 }
 
 export interface NationalIdData {
@@ -66,7 +71,11 @@ export interface PassportData {
 }
 
 export interface TaxIdData {
+  /** Steuer-Identifikationsnummer (IdNr, lifelong, 11 digits). */
   number?: string;
+  /** Steuernummer (assigned by the local tax office, format varies by state). */
+  taxNumber?: string;
+  taxOffice?: string;
 }
 
 export interface SocialSecurityData {
@@ -88,6 +97,18 @@ export interface BankAccountData {
   iban?: string;
   bic?: string;
   bankName?: string;
+}
+
+export interface CryptoData {
+  /** Chain/network, e.g. Bitcoin, Ethereum. */
+  blockchain?: string;
+  /** Public wallet address. */
+  address?: string;
+  /** BIP-39 recovery phrase (12–24 words). */
+  seedPhrase?: string;
+  privateKey?: string;
+  /** Optional 25th-word passphrase. */
+  passphrase?: string;
 }
 
 export interface WifiData {
@@ -126,6 +147,7 @@ export interface EntryDataMap {
   socialSecurity: SocialSecurityData;
   creditCard: CreditCardData;
   bankAccount: BankAccountData;
+  crypto: CryptoData;
   wifi: WifiData;
   sim: SimData;
   server: ServerData;

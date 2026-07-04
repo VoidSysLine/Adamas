@@ -1,8 +1,9 @@
 import { Ionicons } from '@expo/vector-icons';
 import DateTimePicker, { type DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import React, { useState } from 'react';
-import { Modal, Platform, StyleSheet, Text, View } from 'react-native';
+import { Keyboard, Modal, Platform, StyleSheet, Text, View } from 'react-native';
 import Animated, { FadeIn, SlideInDown } from 'react-native-reanimated';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { GradientButton } from './GradientButton';
 import { PressableScale, triggerHaptic } from './PressableScale';
 import { parseFieldDate } from '@/lib/dates';
@@ -44,6 +45,7 @@ export function DateField({
   minimumToday,
 }: Props) {
   const theme = useTheme();
+  const insets = useSafeAreaInsets();
   const [open, setOpen] = useState(false);
   const parsed = parseFieldDate(value);
   const [draft, setDraft] = useState<Date>(parsed ?? new Date(2000, 0, 1));
@@ -63,6 +65,8 @@ export function DateField({
   };
 
   const openPicker = () => {
+    // An open keyboard would push the bottom sheet partially off-screen.
+    Keyboard.dismiss();
     setDraft(parsed ?? (minimumToday ? new Date() : new Date(2000, 0, 1)));
     setOpen(true);
   };
@@ -109,7 +113,14 @@ export function DateField({
             <PressableScale haptic="none" style={StyleSheet.absoluteFill} onPress={() => setOpen(false)} />
             <Animated.View
               entering={SlideInDown.springify().damping(18)}
-              style={[styles.sheet, { backgroundColor: theme.colors.background, borderColor: theme.colors.border }]}
+              style={[
+                styles.sheet,
+                {
+                  backgroundColor: theme.colors.background,
+                  borderColor: theme.colors.border,
+                  paddingBottom: insets.bottom + spacing.lg,
+                },
+              ]}
             >
               <Text style={[typo.headline, { color: theme.colors.text, textAlign: 'center' }]}>{label}</Text>
               <DateTimePicker
@@ -161,7 +172,6 @@ const styles = StyleSheet.create({
   },
   sheet: {
     padding: spacing.lg,
-    paddingBottom: spacing.xxl,
     borderTopLeftRadius: radius.xl,
     borderTopRightRadius: radius.xl,
     borderWidth: StyleSheet.hairlineWidth,

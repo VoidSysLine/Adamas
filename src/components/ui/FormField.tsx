@@ -14,6 +14,8 @@ interface Props {
   placeholder?: string;
   /** Live input mask (grouping / uppercasing / digit limits). */
   mask?: MaskKind;
+  /** Schema `secure` flag: disables keyboard assistance even for text/multiline (seed phrase). */
+  sensitive?: boolean;
   autoFocus?: boolean;
   /** Renders a generator action inside the field. */
   onGenerate?: () => void;
@@ -36,7 +38,7 @@ function keyboardFor(type: FieldType): KeyboardTypeOptions {
 }
 
 /** Schema-aware form input with floating label, secure toggle and generator slot. */
-export function FormField({ label, value, onChangeText, fieldType = 'text', placeholder, mask, autoFocus, onGenerate }: Props) {
+export function FormField({ label, value, onChangeText, fieldType = 'text', placeholder, mask, sensitive, autoFocus, onGenerate }: Props) {
   const theme = useTheme();
   const [focused, setFocused] = useState(false);
   // Masked fields (IBAN, card no., …) stay visible while typing so the live
@@ -44,8 +46,11 @@ export function FormField({ label, value, onChangeText, fieldType = 'text', plac
   const [revealed, setRevealed] = useState(!!mask);
   const secure = fieldType === 'password' || fieldType === 'pin' || fieldType === 'totp';
   const multiline = fieldType === 'multiline';
-  // Grouped masks read best in a monospaced face so digits align.
-  const monoDisplay = !!mask && mask !== 'phone' && mask !== 'upperText';
+  // Technical values and grouped masks read best monospaced so characters align.
+  const monoDisplay = fieldType === 'code' || (!!mask && mask !== 'phone' && mask !== 'upperText');
+  // Only prose fields get auto-capitalization and autocorrect; identifiers,
+  // masked values and secrets must never be "helped" by the keyboard.
+  const prose = !mask && !sensitive && (fieldType === 'text' || fieldType === 'multiline');
 
   const handleChange = (next: string) => {
     if (mask) onChangeText(applyMask(MASKS[mask], value, next));
@@ -73,8 +78,8 @@ export function FormField({ label, value, onChangeText, fieldType = 'text', plac
           placeholder={placeholder}
           placeholderTextColor={theme.colors.textTertiary}
           keyboardType={keyboardFor(fieldType)}
-          autoCapitalize={mask ? 'none' : fieldType === 'text' ? 'sentences' : 'none'}
-          autoCorrect={!mask && (fieldType === 'text' || fieldType === 'multiline')}
+          autoCapitalize={prose ? 'sentences' : 'none'}
+          autoCorrect={prose}
           secureTextEntry={secure && !revealed}
           multiline={multiline}
           autoFocus={autoFocus}

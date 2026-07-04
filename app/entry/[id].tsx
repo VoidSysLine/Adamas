@@ -128,7 +128,7 @@ export default function EntryDetail() {
                         value={display}
                         copyValue={copyValue}
                         secure={field.secure}
-                        mono={field.type === 'number' || field.type === 'pin' || !!field.mask}
+                        mono={field.type === 'number' || field.type === 'pin' || field.type === 'code' || !!field.mask}
                         multiline={field.type === 'multiline'}
                       />
                       {index < visible.length - 1 && (

@@ -23,6 +23,7 @@ const TITLE_EXAMPLES: Partial<Record<EntryKind, string>> = {
   identity: 'Max Mustermann',
   creditCard: 'Visa Gold',
   bankAccount: 'Girokonto',
+  crypto: 'Bitcoin Wallet',
   wifi: 'Zuhause',
   server: 'Homelab',
   note: 'Tresorcode',
@@ -151,6 +152,7 @@ export default function EditEntry() {
                 onChangeText={(text) => setField(field.key, text)}
                 fieldType={field.type}
                 mask={field.mask}
+                sensitive={field.secure}
                 placeholder={hint}
                 onGenerate={
                   field.generator === 'password'

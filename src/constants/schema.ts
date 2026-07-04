@@ -7,6 +7,10 @@ export type IoniconName = ComponentProps<typeof Ionicons>['name'];
 
 export type FieldType =
   | 'text'
+  /** Handles like text but without auto-capitalization/correction (usernames). */
+  | 'username'
+  /** Technical identifier: monospaced, no auto-capitalization/correction (wallet address, keys). */
+  | 'code'
   | 'email'
   | 'url'
   | 'password'
@@ -79,7 +83,7 @@ export const KIND_REGISTRY: { [K in EntryKind]: KindMeta<K> } = {
     icon: 'globe-outline',
     fields: [
       { key: 'url', label: 'url', type: 'url', hint: 'urlExample' },
-      { key: 'username', label: 'username', type: 'text', hint: 'usernameExample' },
+      { key: 'username', label: 'username', type: 'username', hint: 'usernameExample' },
       { key: 'email', label: 'email', type: 'email', hint: 'emailExample' },
       { key: 'password', label: 'password', type: 'password', secure: true, generator: 'password' },
       { key: 'totpSeed', label: 'totpSeed', type: 'totp', mask: 'base32', hint: 'totpExample', secure: true },
@@ -93,6 +97,10 @@ export const KIND_REGISTRY: { [K in EntryKind]: KindMeta<K> } = {
       { key: 'lastName', label: 'lastName', type: 'text', hint: 'lastNameExample' },
       { key: 'birthDate', label: 'birthDate', type: 'date' },
       { key: 'gender', label: 'gender', type: 'select', options: GENDER_OPTIONS },
+      { key: 'street', label: 'street', type: 'text', hint: 'streetExample' },
+      { key: 'postalCode', label: 'postalCode', type: 'number', mask: 'digits5', hint: 'postalCodeExample' },
+      { key: 'city', label: 'city', type: 'text', hint: 'cityExample' },
+      { key: 'country', label: 'country', type: 'text', hint: 'countryExample' },
     ],
   },
   nationalId: {
@@ -127,7 +135,11 @@ export const KIND_REGISTRY: { [K in EntryKind]: KindMeta<K> } = {
   taxId: {
     category: 'documents',
     icon: 'document-text-outline',
-    fields: [{ key: 'number', label: 'taxNumber', type: 'text', mask: 'taxIdDe', hint: 'taxIdExample', secure: true }],
+    fields: [
+      { key: 'number', label: 'taxId', type: 'number', mask: 'taxIdDe', hint: 'taxIdExample', secure: true },
+      { key: 'taxNumber', label: 'taxNumber', type: 'code', mask: 'taxNumberDe', hint: 'taxNumberExample', secure: true },
+      { key: 'taxOffice', label: 'taxOffice', type: 'text', hint: 'taxOfficeExample' },
+    ],
   },
   socialSecurity: {
     category: 'documents',
@@ -153,9 +165,20 @@ export const KIND_REGISTRY: { [K in EntryKind]: KindMeta<K> } = {
     icon: 'business-outline',
     fields: [
       { key: 'holder', label: 'accountHolder', type: 'text', hint: 'accountHolderExample' },
-      { key: 'iban', label: 'iban', type: 'text', mask: 'iban', hint: 'ibanExample', secure: true },
-      { key: 'bic', label: 'bic', type: 'text', mask: 'bic', hint: 'bicExample' },
+      { key: 'iban', label: 'iban', type: 'code', mask: 'iban', hint: 'ibanExample', secure: true },
+      { key: 'bic', label: 'bic', type: 'code', mask: 'bic', hint: 'bicExample' },
       { key: 'bankName', label: 'bankName', type: 'text', hint: 'bankNameExample' },
+    ],
+  },
+  crypto: {
+    category: 'finance',
+    icon: 'logo-bitcoin',
+    fields: [
+      { key: 'blockchain', label: 'blockchain', type: 'text', hint: 'blockchainExample' },
+      { key: 'address', label: 'walletAddress', type: 'code', hint: 'walletAddressExample' },
+      { key: 'seedPhrase', label: 'seedPhrase', type: 'multiline', hint: 'seedPhraseExample', secure: true },
+      { key: 'privateKey', label: 'privateKey', type: 'code', hint: 'walletKeyExample', secure: true },
+      { key: 'passphrase', label: 'walletPassphrase', type: 'password', secure: true, generator: 'password' },
     ],
   },
   wifi: {
@@ -184,7 +207,7 @@ export const KIND_REGISTRY: { [K in EntryKind]: KindMeta<K> } = {
     fields: [
       { key: 'host', label: 'host', type: 'url', hint: 'hostExample' },
       { key: 'port', label: 'port', type: 'number', mask: 'port', hint: 'portExample' },
-      { key: 'username', label: 'username', type: 'text', hint: 'serverUserExample' },
+      { key: 'username', label: 'username', type: 'username', hint: 'serverUserExample' },
       { key: 'password', label: 'password', type: 'password', secure: true, generator: 'password' },
       { key: 'privateKey', label: 'privateKey', type: 'multiline', hint: 'privateKeyExample', secure: true },
     ],
@@ -211,7 +234,7 @@ export const CATEGORIES: Record<Category, CategoryMeta> = {
     gradient: ['#FDE68A', '#F59E0B'],
     kinds: ['nationalId', 'driversLicense', 'passport', 'taxId', 'socialSecurity'],
   },
-  finance: { icon: 'card-outline', gradient: ['#6EE7B7', '#10B981'], kinds: ['creditCard', 'bankAccount'] },
+  finance: { icon: 'card-outline', gradient: ['#6EE7B7', '#10B981'], kinds: ['creditCard', 'bankAccount', 'crypto'] },
   tech: { icon: 'hardware-chip-outline', gradient: ['#A5B4FC', '#6366F1'], kinds: ['wifi', 'sim', 'server'] },
   notes: { icon: 'reader-outline', gradient: ['#FDA4AF', '#F43F5E'], kinds: ['note'] },
 };

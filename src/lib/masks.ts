@@ -13,9 +13,11 @@ export type MaskKind =
   | 'monthYear'
   | 'iccid'
   | 'taxIdDe'
+  | 'taxNumberDe'
   | 'svnrDe'
   | 'base32'
   | 'digits4'
+  | 'digits5'
   | 'digits8'
   | 'port'
   | 'phone'
@@ -96,6 +98,12 @@ export const MASKS: Record<MaskKind, Mask> = {
     format: (raw) => groupAt(raw, [2, 5, 8]),
     copyRaw: true,
   },
+  // German Steuernummer: digits with slashes; grouping varies by state
+  // (e.g. 133/8150/8159), so slashes are kept as typed.
+  taxNumberDe: {
+    strip: (s) => s.replace(/[^\d/]/g, '').slice(0, 14),
+    format: (raw) => raw,
+  },
   // German SV-Nummer: 8 digits, 1 letter, 3 digits → "12 070649 C 103".
   svnrDe: {
     strip: (s) => shape(onlyUpperAlnum(s), 'DDDDDDDDLDDD'),
@@ -110,6 +118,11 @@ export const MASKS: Record<MaskKind, Mask> = {
   },
   digits4: {
     strip: (s) => onlyDigits(s).slice(0, 4),
+    format: (raw) => raw,
+  },
+  // German PLZ.
+  digits5: {
+    strip: (s) => onlyDigits(s).slice(0, 5),
     format: (raw) => raw,
   },
   digits8: {
