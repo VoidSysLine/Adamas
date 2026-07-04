@@ -10,7 +10,7 @@ import { PressableScale } from '@/components/ui/PressableScale';
 import { useT } from '@/i18n';
 import { runAudit } from '@/lib/audit';
 import { useVault } from '@/store/vaultStore';
-import { radius, spacing, type as typo, useTheme } from '@/theme';
+import { fonts, radius, spacing, type as typo, useTheme } from '@/theme';
 
 export default function ToolsScreen() {
   const theme = useTheme();
@@ -77,6 +77,45 @@ export default function ToolsScreen() {
           </GlassCard>
         </PressableScale>
       </Animated.View>
+
+      <Animated.View entering={FadeInDown.delay(160).springify().damping(18)}>
+        <Text style={[typo.micro, styles.sectionLabel, { color: theme.colors.textTertiary }]}>
+          {t('importer.sectionTitle')}
+        </Text>
+        <GlassCard>
+          <PressableScale haptic="light" style={styles.row} onPress={() => router.push('/import')}>
+            <View style={[styles.rowIcon, { backgroundColor: '#175DDC' }]}>
+              <Ionicons name="shield-half-outline" size={19} color="#FFFFFF" />
+            </View>
+            <View style={styles.text}>
+              <Text style={[typo.headline, { color: theme.colors.text }]}>{t('importer.bitwarden')}</Text>
+              <Text style={[typo.caption, { color: theme.colors.textSecondary }]}>
+                {t('importer.bitwardenSub')}
+              </Text>
+            </View>
+            <Ionicons name="chevron-forward" size={17} color={theme.colors.textTertiary} />
+          </PressableScale>
+          {(
+            [
+              { key: 'onePassword', icon: 'key-outline' },
+              { key: 'csv', icon: 'document-text-outline' },
+              { key: 'export', icon: 'download-outline' },
+            ] as const
+          ).map(({ key, icon }) => (
+            <View key={key} style={[styles.row, styles.rowDisabled, { borderTopColor: theme.colors.border }]}>
+              <View style={[styles.rowIcon, { backgroundColor: theme.colors.surfaceAlt }]}>
+                <Ionicons name={icon} size={19} color={theme.colors.textTertiary} />
+              </View>
+              <Text style={[typo.headline, { color: theme.colors.textTertiary, flex: 1 }]}>
+                {t(`importer.${key}`)}
+              </Text>
+              <View style={[styles.soonChip, { backgroundColor: theme.colors.surfaceAlt }]}>
+                <Text style={[typo.micro, { color: theme.colors.textTertiary }]}>{t('importer.soon')}</Text>
+              </View>
+            </View>
+          ))}
+        </GlassCard>
+      </Animated.View>
     </ScrollView>
   );
 }
@@ -107,7 +146,34 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   scoreText: {
+    fontFamily: fonts.displayHeavy,
     fontSize: 24,
-    fontWeight: '800',
+  },
+  sectionLabel: {
+    marginBottom: spacing.sm,
+    marginLeft: spacing.xs,
+  },
+  row: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.md,
+  },
+  rowDisabled: {
+    borderTopWidth: StyleSheet.hairlineWidth,
+    opacity: 0.75,
+  },
+  rowIcon: {
+    width: 38,
+    height: 38,
+    borderRadius: radius.sm,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  soonChip: {
+    paddingHorizontal: spacing.sm + 2,
+    paddingVertical: 4,
+    borderRadius: radius.full,
   },
 });

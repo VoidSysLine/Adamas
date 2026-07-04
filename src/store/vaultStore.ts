@@ -2,6 +2,7 @@ import * as Crypto from 'expo-crypto';
 import { create } from 'zustand';
 import * as service from '@/crypto/vaultService';
 import { fieldsOf } from '@/constants/schema';
+import type { ImportedLogin } from '@/lib/importers/bitwarden';
 import type { EntryDataMap, EntryKind, VaultEntry, VaultEntryOf } from '@/types/vault';
 
 export type VaultStatus = 'loading' | 'none' | 'locked' | 'unlocked';
@@ -31,6 +32,8 @@ interface VaultState {
   ) => void;
   removeEntry: (id: string) => void;
   toggleFavorite: (id: string) => void;
+  /** Batch import (e.g. Bitwarden): one persist, original timestamps kept. */
+  importLogins: (logins: ImportedLogin[]) => number;
 }
 
 /** Field keys whose change should refresh `secretUpdatedAt` (audit input). */
@@ -137,5 +140,26 @@ export const useVault = create<VaultState>()((set, get) => ({
       entries: get().entries.map((e) => (e.id === id ? { ...e, favorite: !e.favorite } : e)),
     });
     persist(get);
+  },
+
+  importLogins: (logins) => {
+    if (logins.length === 0) return 0;
+    const now = Date.now();
+    const imported: VaultEntry[] = logins.map((login) => ({
+      id: Crypto.randomUUID(),
+      kind: 'login',
+      title: login.title,
+      favorite: login.favorite,
+      notes: login.notes,
+      createdAt: login.createdAt ?? now,
+      updatedAt: login.updatedAt ?? now,
+      // Bitwarden exports don't carry a password-change date; the revision
+      // date is the closest honest signal for the "old passwords" audit.
+      secretUpdatedAt: login.updatedAt ?? now,
+      data: login.data,
+    }));
+    set({ entries: [...imported, ...get().entries] });
+    persist(get);
+    return imported.length;
   },
 }));
