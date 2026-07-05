@@ -7,11 +7,12 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { GlassCard } from '@/components/ui/GlassCard';
 import { PressableScale, triggerHaptic } from '@/components/ui/PressableScale';
 import { useToast } from '@/components/ui/Toast';
+import { AttachmentsCard } from '@/components/vault/AttachmentsCard';
 import { CopyRow } from '@/components/vault/CopyRow';
 import { FaviconBadge } from '@/components/vault/FaviconBadge';
 import { TotpRing } from '@/components/vault/TotpRing';
 import { WifiQrCard } from '@/components/vault/WifiQrCard';
-import { fieldsOf, type FieldDef } from '@/constants/schema';
+import { fieldsOf, kindAllowsAttachments, type FieldDef } from '@/constants/schema';
 import { useT, resolveLanguage } from '@/i18n';
 import { formatTimestamp, parseFieldDate } from '@/lib/dates';
 import { MASKS } from '@/lib/masks';
@@ -145,6 +146,12 @@ export default function EntryDetail() {
                   );
                 })}
             </GlassCard>
+          </Animated.View>
+        )}
+
+        {kindAllowsAttachments(entry.kind) && (
+          <Animated.View entering={FadeInDown.delay(180).springify().damping(18)}>
+            <AttachmentsCard entry={entry} />
           </Animated.View>
         )}
 

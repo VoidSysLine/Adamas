@@ -327,3 +327,8 @@ export function kindIcon(kind: EntryKind): IoniconName {
 export function kindGradient(kind: EntryKind): readonly [string, string] {
   return CATEGORIES[categoryOf(kind)].gradient;
 }
+
+/** Encrypted photo attachments (front/back of a card) — documents & credit cards. */
+export function kindAllowsAttachments(kind: EntryKind): boolean {
+  return categoryOf(kind) === 'documents' || kind === 'creditCard';
+}

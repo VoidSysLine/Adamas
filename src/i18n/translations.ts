@@ -245,6 +245,15 @@ export const de = {
     auditSub: 'Analyse deines Tresors',
     score: 'Sicherheits-Score',
   },
+  attachments: {
+    title: 'Anhänge',
+    camera: 'Kamera',
+    gallery: 'Galerie',
+    hint: 'Max. 2 Fotos (z. B. Vorder- & Rückseite) — verkleinert, ohne EXIF/GPS, AES-verschlüsselt gespeichert.',
+    added: 'Foto verschlüsselt gespeichert',
+    tooLarge: 'Bild zu groß — bitte ein kleineres wählen.',
+    deleteTitle: 'Anhang löschen?',
+  },
   wifiQr: {
     title: 'WLAN-QR-Code',
     hint: 'Mit der Kamera scannen, um sich direkt mit dem Netzwerk zu verbinden.',
@@ -609,6 +618,15 @@ export const en: Translations = {
     audit: 'Security Audit',
     auditSub: 'Analyze your vault',
     score: 'Security score',
+  },
+  attachments: {
+    title: 'Attachments',
+    camera: 'Camera',
+    gallery: 'Gallery',
+    hint: 'Max. 2 photos (e.g. front & back) — downscaled, EXIF/GPS stripped, stored AES-encrypted.',
+    added: 'Photo stored encrypted',
+    tooLarge: 'Image too large — please pick a smaller one.',
+    deleteTitle: 'Delete attachment?',
   },
   wifiQr: {
     title: 'Wi-Fi QR Code',

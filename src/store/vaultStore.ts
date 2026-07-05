@@ -2,8 +2,9 @@ import * as Crypto from 'expo-crypto';
 import { create } from 'zustand';
 import * as service from '@/crypto/vaultService';
 import { fieldsOf } from '@/constants/schema';
+import * as attachments from '@/lib/attachments';
 import type { ImportedLogin } from '@/lib/importers/bitwarden';
-import type { EntryDataMap, EntryKind, VaultEntry, VaultEntryOf } from '@/types/vault';
+import type { AttachmentMeta, EntryDataMap, EntryKind, VaultEntry, VaultEntryOf } from '@/types/vault';
 
 export type VaultStatus = 'loading' | 'none' | 'locked' | 'unlocked';
 
@@ -34,6 +35,9 @@ interface VaultState {
   toggleFavorite: (id: string) => void;
   /** Batch import (e.g. Bitwarden): one persist, original timestamps kept. */
   importLogins: (logins: ImportedLogin[]) => number;
+  /** Encrypts and stores an image; returns false when the entry is at its limit. */
+  addAttachment: (entryId: string, input: { name: string; mime: string; base64: string }) => Promise<boolean>;
+  removeAttachment: (entryId: string, attachmentId: string) => Promise<void>;
 }
 
 /** Field keys whose change should refresh `secretUpdatedAt` (audit input). */
@@ -85,6 +89,7 @@ export const useVault = create<VaultState>()((set, get) => ({
   },
 
   erase: async () => {
+    await attachments.deleteAllAttachments().catch(() => {});
     await service.eraseVault();
     set({ status: 'none', vaultKey: null, entries: [] });
   },
@@ -131,6 +136,11 @@ export const useVault = create<VaultState>()((set, get) => ({
   },
 
   removeEntry: (id) => {
+    const entry = get().entries.find((e) => e.id === id);
+    // Best-effort cleanup of encrypted attachment files.
+    for (const meta of entry?.attachments ?? []) {
+      attachments.deleteAttachment(meta.id).catch(() => {});
+    }
     set({ entries: get().entries.filter((e) => e.id !== id) });
     persist(get);
   },
@@ -161,5 +171,43 @@ export const useVault = create<VaultState>()((set, get) => ({
     set({ entries: [...imported, ...get().entries] });
     persist(get);
     return imported.length;
+  },
+
+  addAttachment: async (entryId, input) => {
+    const { vaultKey, entries } = get();
+    const entry = entries.find((e) => e.id === entryId);
+    if (!vaultKey || !entry) return false;
+    if ((entry.attachments?.length ?? 0) >= attachments.MAX_ATTACHMENTS_PER_ENTRY) return false;
+    if (input.base64.length > attachments.MAX_BASE64_LENGTH) return false;
+
+    const meta: AttachmentMeta = {
+      id: Crypto.randomUUID(),
+      name: input.name,
+      mime: input.mime,
+      size: input.base64.length,
+      addedAt: Date.now(),
+    };
+    await attachments.saveAttachment(meta.id, input.base64, vaultKey);
+    set({
+      entries: get().entries.map((e) =>
+        e.id === entryId
+          ? { ...e, attachments: [...(e.attachments ?? []), meta], updatedAt: Date.now() }
+          : e,
+      ),
+    });
+    persist(get);
+    return true;
+  },
+
+  removeAttachment: async (entryId, attachmentId) => {
+    await attachments.deleteAttachment(attachmentId).catch(() => {});
+    set({
+      entries: get().entries.map((e) =>
+        e.id === entryId
+          ? { ...e, attachments: (e.attachments ?? []).filter((a) => a.id !== attachmentId), updatedAt: Date.now() }
+          : e,
+      ),
+    });
+    persist(get);
   },
 }));

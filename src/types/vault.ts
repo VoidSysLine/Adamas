@@ -209,11 +209,22 @@ export interface EntryDataMap {
   note: NoteData;
 }
 
+/** Metadata of an encrypted image attachment; the payload lives on disk. */
+export interface AttachmentMeta {
+  id: string;
+  name: string;
+  mime: string;
+  /** Size of the (unencrypted) base64 payload in bytes. */
+  size: number;
+  addedAt: number;
+}
+
 interface VaultEntryBase {
   id: string;
   title: string;
   favorite: boolean;
   notes?: string;
+  attachments?: AttachmentMeta[];
   /** Unix ms timestamps. */
   createdAt: number;
   updatedAt: number;
