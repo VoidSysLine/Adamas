@@ -1,4 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
+import * as Linking from 'expo-linking';
 import React, { useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { fonts, spacing, type as typo, useTheme } from '@/theme';
@@ -11,6 +12,8 @@ interface Props {
   value: string;
   /** Value placed on the clipboard, if different from `value` (e.g. IBAN without spaces). */
   copyValue?: string;
+  /** When set, shows an open-in-browser action next to copy. */
+  href?: string;
   secure?: boolean;
   mono?: boolean;
   multiline?: boolean;
@@ -20,7 +23,7 @@ interface Props {
  * Detail-view row: tap anywhere to copy; secure values are masked with a
  * dot pattern and can be revealed via the eye toggle.
  */
-export function CopyRow({ label, value, copyValue, secure, mono, multiline }: Props) {
+export function CopyRow({ label, value, copyValue, href, secure, mono, multiline }: Props) {
   const theme = useTheme();
   const copy = useCopy();
   const [revealed, setRevealed] = useState(false);
@@ -28,6 +31,12 @@ export function CopyRow({ label, value, copyValue, secure, mono, multiline }: Pr
   const masked = secure && !revealed;
   const display = masked ? '•'.repeat(Math.min(Math.max(value.length, 8), 14)) : value;
   const clipboard = copyValue ?? value;
+
+  const openInBrowser = () => {
+    if (!href) return;
+    triggerHaptic('light');
+    Linking.openURL(href).catch(() => {});
+  };
 
   return (
     <View style={styles.row}>
@@ -59,6 +68,11 @@ export function CopyRow({ label, value, copyValue, secure, mono, multiline }: Pr
             size={19}
             color={theme.colors.textSecondary}
           />
+        </PressableScale>
+      )}
+      {href && (
+        <PressableScale haptic="none" style={styles.iconButton} onPress={openInBrowser}>
+          <Ionicons name="open-outline" size={18} color={theme.colors.accent} />
         </PressableScale>
       )}
       <PressableScale haptic="none" style={styles.iconButton} onPress={() => copy(label, clipboard)}>

@@ -29,3 +29,17 @@ export function monogram(title: string): string {
   const ch = title.trim().charAt(0);
   return ch ? ch.toUpperCase() : '•';
 }
+
+/** Normalizes user input into an openable URL (adds https:// when schemeless). */
+export function normalizeWebUrl(raw: string | undefined): string | null {
+  const input = raw?.trim();
+  if (!input) return null;
+  const withScheme = /^[a-zA-Z][a-zA-Z0-9+.-]*:\/\//.test(input) ? input : `https://${input}`;
+  try {
+    // Validates it parses as a URL at all.
+    new URL(withScheme);
+    return withScheme;
+  } catch {
+    return null;
+  }
+}

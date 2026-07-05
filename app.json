@@ -11,7 +11,8 @@
     "ios": {
       "supportsTablet": true,
       "infoPlist": {
-        "NSFaceIDUsageDescription": "Adamas verwendet Face ID, um deinen Tresor sicher zu entsperren."
+        "NSFaceIDUsageDescription": "Adamas verwendet Face ID, um deinen Tresor sicher zu entsperren.",
+        "NSCameraUsageDescription": "Adamas verwendet die Kamera, um 2FA-QR-Codes und Belege zu scannen."
       }
     },
     "android": {
@@ -39,7 +40,13 @@
         }
       ],
       "expo-local-authentication",
-      "expo-font"
+      "expo-font",
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Adamas verwendet die Kamera, um 2FA-QR-Codes zu scannen."
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": false

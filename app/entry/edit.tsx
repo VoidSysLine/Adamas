@@ -8,12 +8,14 @@ import { DateField } from '@/components/ui/DateField';
 import { FormField } from '@/components/ui/FormField';
 import { GradientButton } from '@/components/ui/GradientButton';
 import { PressableScale, triggerHaptic } from '@/components/ui/PressableScale';
+import { QrScannerModal } from '@/components/ui/QrScannerModal';
 import { SelectField } from '@/components/ui/SelectField';
 import { StrengthMeter } from '@/components/ui/StrengthMeter';
 import { useToast } from '@/components/ui/Toast';
 import { fieldsOf } from '@/constants/schema';
 import { resolveLanguage, useT } from '@/i18n';
 import { DEFAULT_PASSWORD, generatePassword, generatePin } from '@/lib/generator';
+import { parseTotpScan } from '@/lib/importers/totp';
 import { useSettings } from '@/store/settingsStore';
 import { useVault } from '@/store/vaultStore';
 import { radius, spacing, type as typo, useTheme } from '@/theme';
@@ -76,6 +78,8 @@ export default function EditEntry() {
     return initial;
   });
   const [titleError, setTitleError] = useState(false);
+
+  const [scanningKey, setScanningKey] = useState<string | null>(null);
 
   const [customFields, setCustomFields] = useState<CustomField[]>(existing?.customFields ?? []);
   const [composerOpen, setComposerOpen] = useState(false);
@@ -200,6 +204,7 @@ export default function EditEntry() {
                 mask={field.mask}
                 sensitive={field.secure}
                 placeholder={hint}
+                onScan={field.type === 'totp' ? () => setScanningKey(field.key) : undefined}
                 onGenerate={
                   field.generator === 'password'
                     ? () => setField(field.key, generatePassword(DEFAULT_PASSWORD))
@@ -321,6 +326,21 @@ export default function EditEntry() {
 
         <GradientButton label={t('common.save')} onPress={onSave} haptic="none" style={{ marginTop: spacing.sm }} />
       </ScrollView>
+
+      <QrScannerModal
+        visible={scanningKey !== null}
+        onClose={() => setScanningKey(null)}
+        title={t('scanner.totpTitle')}
+        hint={t('scanner.totpHint')}
+        onScan={(value) => {
+          const parsed = parseTotpScan(value);
+          if (!parsed) return false;
+          if (scanningKey) setField(scanningKey, parsed.seed);
+          setScanningKey(null);
+          toast({ message: t('scanner.totpAdded'), icon: 'shield-checkmark-outline', tone: 'success' });
+          return true;
+        }}
+      />
     </KeyboardAvoidingView>
   );
 }

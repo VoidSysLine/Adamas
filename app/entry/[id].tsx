@@ -15,6 +15,7 @@ import { WifiQrCard } from '@/components/vault/WifiQrCard';
 import { fieldsOf, kindAllowsAttachments, type FieldDef } from '@/constants/schema';
 import { useT, resolveLanguage } from '@/i18n';
 import { formatTimestamp, parseFieldDate } from '@/lib/dates';
+import { normalizeWebUrl } from '@/lib/favicon';
 import { MASKS } from '@/lib/masks';
 import { useSettings } from '@/store/settingsStore';
 import { useVault } from '@/store/vaultStore';
@@ -129,12 +130,14 @@ export default function EntryDetail() {
                 .filter((f) => f.type !== 'totp')
                 .map((field, index, visible) => {
                   const { display, copyValue } = present(field);
+                  const href = field.type === 'url' ? normalizeWebUrl(display) : null;
                   return (
                     <View key={field.key}>
                       <CopyRow
                         label={t(`fields.${field.label}` as Parameters<typeof t>[0])}
                         value={display}
                         copyValue={copyValue}
+                        href={href ?? undefined}
                         secure={field.secure}
                         mono={field.type === 'number' || field.type === 'pin' || field.type === 'code' || !!field.mask}
                         multiline={field.type === 'multiline'}
@@ -157,6 +160,7 @@ export default function EntryDetail() {
                 .map((field, index, visible) => {
                   const isDate = field.type === 'date';
                   const parsed = isDate ? parseFieldDate(field.value) : null;
+                  const href = field.type === 'url' ? normalizeWebUrl(field.value) : null;
                   return (
                     <View key={field.id}>
                       <CopyRow
@@ -167,6 +171,7 @@ export default function EntryDetail() {
                             : field.value
                         }
                         copyValue={field.value}
+                        href={href ?? undefined}
                         secure={field.type === 'password' || field.type === 'pin'}
                         mono={field.type === 'pin' || field.type === 'number' || field.type === 'code'}
                         multiline={field.type === 'multiline'}

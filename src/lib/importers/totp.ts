@@ -34,6 +34,18 @@ export interface TotpMatchResult {
   alreadySet: number;
 }
 
+/**
+ * Parses a single scanned value into a TOTP seed. Accepts a full
+ * `otpauth://totp/…?secret=…` URI (from a 2FA setup QR) or a bare Base32
+ * seed. Returns null when it holds no usable seed.
+ */
+export function parseTotpScan(value: string): ImportedTotp | null {
+  const trimmed = value.trim();
+  if (/^otpauth:\/\//i.test(trimmed)) return parseOtpauthUri(trimmed);
+  if (isValidTotpSeed(trimmed)) return { issuer: 'TOTP', seed: trimmed };
+  return null;
+}
+
 function parseOtpauthUri(uri: string): ImportedTotp | null {
   const match = /^otpauth:\/\/totp\/([^?]*)\?(.*)$/i.exec(uri.trim());
   if (!match) return null;

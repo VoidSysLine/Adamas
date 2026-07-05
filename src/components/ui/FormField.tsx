@@ -19,6 +19,8 @@ interface Props {
   autoFocus?: boolean;
   /** Renders a generator action inside the field. */
   onGenerate?: () => void;
+  /** Renders a QR-scan action inside the field (e.g. TOTP setup codes). */
+  onScan?: () => void;
 }
 
 function keyboardFor(type: FieldType): KeyboardTypeOptions {
@@ -38,7 +40,7 @@ function keyboardFor(type: FieldType): KeyboardTypeOptions {
 }
 
 /** Schema-aware form input with floating label, secure toggle and generator slot. */
-export function FormField({ label, value, onChangeText, fieldType = 'text', placeholder, mask, sensitive, autoFocus, onGenerate }: Props) {
+export function FormField({ label, value, onChangeText, fieldType = 'text', placeholder, mask, sensitive, autoFocus, onGenerate, onScan }: Props) {
   const theme = useTheme();
   const [focused, setFocused] = useState(false);
   // Masked fields (IBAN, card no., …) stay visible while typing so the live
@@ -106,6 +108,11 @@ export function FormField({ label, value, onChangeText, fieldType = 'text', plac
               size={19}
               color={theme.colors.textSecondary}
             />
+          </PressableScale>
+        )}
+        {onScan && (
+          <PressableScale haptic="medium" style={styles.action} onPress={onScan}>
+            <Ionicons name="qr-code-outline" size={18} color={theme.colors.accent} />
           </PressableScale>
         )}
         {onGenerate && (

@@ -239,6 +239,15 @@ export const de = {
     generate: 'Generieren',
     pickDate: 'Datum wählen',
   },
+  scanner: {
+    totpTitle: '2FA-QR scannen',
+    totpHint: 'Richte die Kamera auf den 2FA-QR-Code des Dienstes.',
+    totpAdded: '2FA-Schlüssel übernommen',
+    notValid: 'Kein gültiger 2FA-Code — weiter scannen…',
+    permissionTitle: 'Kamerazugriff nötig',
+    permissionHint: 'Adamas braucht die Kamera, um QR-Codes zu scannen.',
+    grant: 'Kamera erlauben',
+  },
   custom: {
     sectionTitle: 'Eigene Felder',
     add: 'Eigenes Feld hinzufügen',
@@ -654,6 +663,15 @@ export const en: Translations = {
     required: 'Please enter a title',
     generate: 'Generate',
     pickDate: 'Pick a date',
+  },
+  scanner: {
+    totpTitle: 'Scan 2FA QR',
+    totpHint: 'Point the camera at the service’s 2FA QR code.',
+    totpAdded: '2FA key added',
+    notValid: 'Not a valid 2FA code — keep scanning…',
+    permissionTitle: 'Camera access needed',
+    permissionHint: 'Adamas needs the camera to scan QR codes.',
+    grant: 'Allow camera',
   },
   custom: {
     sectionTitle: 'Custom fields',
