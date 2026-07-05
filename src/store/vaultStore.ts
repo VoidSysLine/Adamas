@@ -51,6 +51,9 @@ interface VaultState {
   /** Encrypts and stores an image; returns false when the entry is at its limit. */
   addAttachment: (entryId: string, input: { name: string; mime: string; base64: string }) => Promise<boolean>;
   removeAttachment: (entryId: string, attachmentId: string) => Promise<void>;
+  /** Sets/replaces the entry's avatar image (e.g. identity profile photo). */
+  setAvatar: (entryId: string, base64: string) => Promise<void>;
+  removeAvatar: (entryId: string) => Promise<void>;
 }
 
 /** Field keys whose change should refresh `secretUpdatedAt` (audit input). */
@@ -154,10 +157,11 @@ export const useVault = create<VaultState>()((set, get) => ({
 
   removeEntry: (id) => {
     const entry = get().entries.find((e) => e.id === id);
-    // Best-effort cleanup of encrypted attachment files.
+    // Best-effort cleanup of encrypted attachment + avatar files.
     for (const meta of entry?.attachments ?? []) {
       attachments.deleteAttachment(meta.id).catch(() => {});
     }
+    if (entry?.avatarId) attachments.deleteAttachment(entry.avatarId).catch(() => {});
     set({ entries: get().entries.filter((e) => e.id !== id) });
     persist(get);
   },
@@ -254,6 +258,29 @@ export const useVault = create<VaultState>()((set, get) => ({
           ? { ...e, attachments: (e.attachments ?? []).filter((a) => a.id !== attachmentId), updatedAt: Date.now() }
           : e,
       ),
+    });
+    persist(get);
+  },
+
+  setAvatar: async (entryId, base64) => {
+    const { vaultKey, entries } = get();
+    const entry = entries.find((e) => e.id === entryId);
+    if (!vaultKey || !entry || base64.length > attachments.MAX_BASE64_LENGTH) return;
+    const previous = entry.avatarId;
+    const avatarId = Crypto.randomUUID();
+    await attachments.saveAttachment(avatarId, base64, vaultKey);
+    if (previous) attachments.deleteAttachment(previous).catch(() => {});
+    set({
+      entries: get().entries.map((e) => (e.id === entryId ? { ...e, avatarId, updatedAt: Date.now() } : e)),
+    });
+    persist(get);
+  },
+
+  removeAvatar: async (entryId) => {
+    const entry = get().entries.find((e) => e.id === entryId);
+    if (entry?.avatarId) await attachments.deleteAttachment(entry.avatarId).catch(() => {});
+    set({
+      entries: get().entries.map((e) => (e.id === entryId ? { ...e, avatarId: undefined, updatedAt: Date.now() } : e)),
     });
     persist(get);
   },

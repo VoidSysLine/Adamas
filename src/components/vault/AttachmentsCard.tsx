@@ -1,8 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import * as FileSystem from 'expo-file-system/legacy';
 import { Image } from 'expo-image';
-import * as ImageManipulator from 'expo-image-manipulator';
-import * as ImagePicker from 'expo-image-picker';
 import * as MediaLibrary from 'expo-media-library';
 import * as Sharing from 'expo-sharing';
 import React, { useEffect, useState } from 'react';
@@ -11,7 +9,8 @@ import { GlassCard } from '@/components/ui/GlassCard';
 import { PressableScale, triggerHaptic } from '@/components/ui/PressableScale';
 import { useToast } from '@/components/ui/Toast';
 import { useT } from '@/i18n';
-import { loadAttachment, MAX_ATTACHMENTS_PER_ENTRY, MAX_BASE64_LENGTH } from '@/lib/attachments';
+import { loadAttachment, MAX_ATTACHMENTS_PER_ENTRY } from '@/lib/attachments';
+import { pickAndCompressImage } from '@/lib/imagePick';
 import { useVault } from '@/store/vaultStore';
 import { radius, spacing, type as typo, useTheme } from '@/theme';
 import type { AttachmentMeta, VaultEntry } from '@/types/vault';
@@ -142,33 +141,12 @@ export function AttachmentsCard({ entry }: { entry: VaultEntry }) {
     if (busy) return;
     setBusy(true);
     try {
-      const options: ImagePicker.ImagePickerOptions = { mediaTypes: 'images', quality: 1 };
-      const result =
-        source === 'camera'
-          ? await (async () => {
-              const permission = await ImagePicker.requestCameraPermissionsAsync();
-              if (!permission.granted) return null;
-              return ImagePicker.launchCameraAsync(options);
-            })()
-          : await ImagePicker.launchImageLibraryAsync(options);
-      if (!result || result.canceled || !result.assets?.[0]) return;
-
-      const asset = result.assets[0];
-      // Downscale + recompress: bounds the size and drops EXIF/GPS metadata.
-      const processed = await ImageManipulator.manipulateAsync(
-        asset.uri,
-        asset.width > 1600 ? [{ resize: { width: 1600 } }] : [],
-        { compress: 0.6, format: ImageManipulator.SaveFormat.JPEG, base64: true },
-      );
-      if (!processed.base64 || processed.base64.length > MAX_BASE64_LENGTH) {
-        triggerHaptic('error');
-        toast({ message: t('attachments.tooLarge'), icon: 'alert-circle-outline', tone: 'danger' });
-        return;
-      }
+      const picked = await pickAndCompressImage(source);
+      if (!picked) return;
       const ok = await addAttachment(entry.id, {
         name: `${entry.title}-${items.length + 1}.jpg`,
-        mime: 'image/jpeg',
-        base64: processed.base64,
+        mime: picked.mime,
+        base64: picked.base64,
       });
       if (ok) {
         triggerHaptic('success');

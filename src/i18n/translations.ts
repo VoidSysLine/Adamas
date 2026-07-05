@@ -276,6 +276,12 @@ export const de = {
     auditSub: 'Analyse deines Tresors',
     score: 'Sicherheits-Score',
   },
+  avatar: {
+    title: 'Profilbild',
+    camera: 'Foto aufnehmen',
+    gallery: 'Aus Galerie wählen',
+    remove: 'Profilbild entfernen',
+  },
   attachments: {
     title: 'Anhänge',
     camera: 'Kamera',
@@ -700,6 +706,12 @@ export const en: Translations = {
     audit: 'Security Audit',
     auditSub: 'Analyze your vault',
     score: 'Security score',
+  },
+  avatar: {
+    title: 'Profile photo',
+    camera: 'Take photo',
+    gallery: 'Choose from gallery',
+    remove: 'Remove profile photo',
   },
   attachments: {
     title: 'Attachments',

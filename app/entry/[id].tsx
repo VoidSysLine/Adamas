@@ -8,6 +8,7 @@ import { GlassCard } from '@/components/ui/GlassCard';
 import { PressableScale, triggerHaptic } from '@/components/ui/PressableScale';
 import { useToast } from '@/components/ui/Toast';
 import { AttachmentsCard } from '@/components/vault/AttachmentsCard';
+import { AvatarPicker } from '@/components/vault/AvatarPicker';
 import { CopyRow } from '@/components/vault/CopyRow';
 import { FaviconBadge } from '@/components/vault/FaviconBadge';
 import { TotpRing } from '@/components/vault/TotpRing';
@@ -102,7 +103,7 @@ export default function EntryDetail() {
 
       <ScrollView contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 48 }]}>
         <Animated.View entering={FadeInDown.springify().damping(18)} style={styles.hero}>
-          <FaviconBadge entry={entry} size={64} />
+          {entry.kind === 'identity' ? <AvatarPicker entry={entry} /> : <FaviconBadge entry={entry} size={64} />}
           <Text style={[typo.title, { color: theme.colors.text, textAlign: 'center' }]}>{entry.title}</Text>
           <View style={[styles.kindChip, { backgroundColor: theme.colors.accentSoft }]}>
             <Text style={[typo.caption, { color: theme.colors.accent }]}>{t(`kinds.${entry.kind}`)}</Text>

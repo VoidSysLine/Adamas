@@ -53,6 +53,7 @@ export interface LoginData {
 export interface IdentityData {
   firstName?: string;
   lastName?: string;
+  email?: string;
   birthDate?: string;
   gender?: string;
   street?: string;
@@ -249,6 +250,8 @@ interface VaultEntryBase {
   notes?: string;
   customFields?: CustomField[];
   attachments?: AttachmentMeta[];
+  /** Attachment id used as the entry's avatar (identities' profile photo). */
+  avatarId?: string;
   /** Unix ms timestamps. */
   createdAt: number;
   updatedAt: number;

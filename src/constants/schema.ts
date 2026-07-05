@@ -112,6 +112,7 @@ export const KIND_REGISTRY: { [K in EntryKind]: KindMeta<K> } = {
     fields: [
       { key: 'firstName', label: 'firstName', type: 'text', hint: 'firstNameExample' },
       { key: 'lastName', label: 'lastName', type: 'text', hint: 'lastNameExample' },
+      { key: 'email', label: 'email', type: 'email', hint: 'emailExample' },
       { key: 'birthDate', label: 'birthDate', type: 'date' },
       { key: 'gender', label: 'gender', type: 'select', options: GENDER_OPTIONS },
       { key: 'street', label: 'street', type: 'text', hint: 'streetExample' },
