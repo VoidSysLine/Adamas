@@ -209,6 +209,27 @@ export interface EntryDataMap {
   note: NoteData;
 }
 
+/** Types a user can pick for self-defined fields (subset of the schema's FieldType). */
+export type CustomFieldType =
+  | 'text'
+  | 'multiline'
+  | 'password'
+  | 'pin'
+  | 'date'
+  | 'url'
+  | 'email'
+  | 'phone'
+  | 'number'
+  | 'code';
+
+/** A user-defined extra field on an entry (à la Bitwarden custom fields). */
+export interface CustomField {
+  id: string;
+  label: string;
+  type: CustomFieldType;
+  value: string;
+}
+
 /** Metadata of an encrypted image attachment; the payload lives on disk. */
 export interface AttachmentMeta {
   id: string;
@@ -224,6 +245,7 @@ interface VaultEntryBase {
   title: string;
   favorite: boolean;
   notes?: string;
+  customFields?: CustomField[];
   attachments?: AttachmentMeta[];
   /** Unix ms timestamps. */
   createdAt: number;

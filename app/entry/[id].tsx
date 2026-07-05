@@ -149,6 +149,38 @@ export default function EntryDetail() {
           </Animated.View>
         )}
 
+        {(entry.customFields ?? []).filter((f) => f.value).length > 0 && (
+          <Animated.View entering={FadeInDown.delay(160).springify().damping(18)}>
+            <GlassCard style={styles.card}>
+              {(entry.customFields ?? [])
+                .filter((f) => f.value)
+                .map((field, index, visible) => {
+                  const isDate = field.type === 'date';
+                  const parsed = isDate ? parseFieldDate(field.value) : null;
+                  return (
+                    <View key={field.id}>
+                      <CopyRow
+                        label={field.label}
+                        value={
+                          parsed
+                            ? parsed.toLocaleDateString(dateLocale, { day: '2-digit', month: 'long', year: 'numeric' })
+                            : field.value
+                        }
+                        copyValue={field.value}
+                        secure={field.type === 'password' || field.type === 'pin'}
+                        mono={field.type === 'pin' || field.type === 'number' || field.type === 'code'}
+                        multiline={field.type === 'multiline'}
+                      />
+                      {index < visible.length - 1 && (
+                        <View style={[styles.divider, { backgroundColor: theme.colors.border }]} />
+                      )}
+                    </View>
+                  );
+                })}
+            </GlassCard>
+          </Animated.View>
+        )}
+
         {kindAllowsAttachments(entry.kind) && (
           <Animated.View entering={FadeInDown.delay(180).springify().damping(18)}>
             <AttachmentsCard entry={entry} />

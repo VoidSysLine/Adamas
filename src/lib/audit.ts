@@ -40,10 +40,15 @@ function twoFactorHandledElsewhere(twoFactor: string | undefined): boolean {
 
 function passwordsOf(entry: VaultEntry): string[] {
   const data = entry.data as Record<string, string | undefined>;
-  return fieldsOf(entry.kind)
+  const fromSchema = fieldsOf(entry.kind)
     .filter((f) => f.type === 'password')
     .map((f) => data[f.key])
     .filter((v): v is string => !!v);
+  // User-defined password fields get the same weak/reuse coverage.
+  const fromCustom = (entry.customFields ?? [])
+    .filter((f) => f.type === 'password' && f.value)
+    .map((f) => f.value);
+  return [...fromSchema, ...fromCustom];
 }
 
 export function runAudit(

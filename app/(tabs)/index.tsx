@@ -16,7 +16,12 @@ import type { Category, VaultEntry } from '@/types/vault';
 type Filter = 'all' | 'favorites' | Category;
 
 function matchesQuery(entry: VaultEntry, query: string): boolean {
-  const haystack = [entry.title, entry.notes ?? '', ...Object.values(entry.data as Record<string, string | undefined>)]
+  const haystack = [
+    entry.title,
+    entry.notes ?? '',
+    ...Object.values(entry.data as Record<string, string | undefined>),
+    ...(entry.customFields ?? []).flatMap((f) => [f.label, f.value]),
+  ]
     .filter((v): v is string => !!v)
     .join('\n')
     .toLowerCase();

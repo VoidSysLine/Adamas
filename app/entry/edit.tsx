@@ -1,4 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
+import * as Crypto from 'expo-crypto';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useMemo, useState } from 'react';
 import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
@@ -15,8 +16,22 @@ import { resolveLanguage, useT } from '@/i18n';
 import { DEFAULT_PASSWORD, generatePassword, generatePin } from '@/lib/generator';
 import { useSettings } from '@/store/settingsStore';
 import { useVault } from '@/store/vaultStore';
-import { spacing, type as typo, useTheme } from '@/theme';
-import type { EntryDataMap, EntryKind } from '@/types/vault';
+import { radius, spacing, type as typo, useTheme } from '@/theme';
+import type { CustomField, CustomFieldType, EntryDataMap, EntryKind } from '@/types/vault';
+
+/** Types offered in the custom-field composer, in display order. */
+const CUSTOM_FIELD_TYPES: CustomFieldType[] = [
+  'text',
+  'password',
+  'pin',
+  'date',
+  'code',
+  'url',
+  'email',
+  'phone',
+  'number',
+  'multiline',
+];
 
 const TITLE_EXAMPLES: Partial<Record<EntryKind, string>> = {
   login: 'GitHub',
@@ -62,7 +77,25 @@ export default function EditEntry() {
   });
   const [titleError, setTitleError] = useState(false);
 
+  const [customFields, setCustomFields] = useState<CustomField[]>(existing?.customFields ?? []);
+  const [composerOpen, setComposerOpen] = useState(false);
+  const [composerName, setComposerName] = useState('');
+  const [composerType, setComposerType] = useState<CustomFieldType>('text');
+
   const setField = (key: string, value: string) => setData((d) => ({ ...d, [key]: value }));
+
+  const setCustomValue = (id: string, value: string) =>
+    setCustomFields((list) => list.map((f) => (f.id === id ? { ...f, value } : f)));
+
+  const addCustomField = () => {
+    const label = composerName.trim();
+    if (!label) return;
+    setCustomFields((list) => [...list, { id: Crypto.randomUUID(), label, type: composerType, value: '' }]);
+    setComposerName('');
+    setComposerType('text');
+    setComposerOpen(false);
+    triggerHaptic('success');
+  };
 
   const passwordKey = useMemo(() => fields.find((f) => f.type === 'password')?.key, [fields]);
 
@@ -76,10 +109,18 @@ export default function EditEntry() {
     for (const [key, value] of Object.entries(data)) {
       if (value.trim()) cleaned[key] = value.trim();
     }
+    const cleanedCustom = customFields
+      .map((f) => ({ ...f, label: f.label.trim(), value: f.value.trim() }))
+      .filter((f) => f.label.length > 0);
     if (existing) {
-      updateEntry(existing.id, { title, notes, data: cleaned as EntryDataMap[EntryKind] });
+      updateEntry(existing.id, {
+        title,
+        notes,
+        data: cleaned as EntryDataMap[EntryKind],
+        customFields: cleanedCustom,
+      });
     } else {
-      addEntry(kind, title, cleaned as EntryDataMap[typeof kind], notes);
+      addEntry(kind, title, cleaned as EntryDataMap[typeof kind], notes, cleanedCustom);
     }
     triggerHaptic('success');
     toast({ message: t('toast.saved'), icon: 'checkmark-circle-outline', tone: 'success' });
@@ -174,6 +215,102 @@ export default function EditEntry() {
           );
         })}
 
+        {(customFields.length > 0 || composerOpen) && (
+          <Text style={[typo.micro, { color: theme.colors.textTertiary, marginTop: spacing.sm }]}>
+            {t('custom.sectionTitle')}
+          </Text>
+        )}
+
+        {customFields.map((field) => (
+          <View key={field.id} style={styles.customRow}>
+            <View style={{ flex: 1 }}>
+              {field.type === 'date' ? (
+                <DateField
+                  label={field.label}
+                  value={field.value}
+                  onChange={(value) => setCustomValue(field.id, value)}
+                  placeholder={t('edit.pickDate')}
+                  doneLabel={t('common.done')}
+                  locale={dateLocale}
+                />
+              ) : (
+                <FormField
+                  label={field.label}
+                  value={field.value}
+                  onChangeText={(value) => setCustomValue(field.id, value)}
+                  fieldType={field.type}
+                  sensitive={field.type === 'password' || field.type === 'pin'}
+                  onGenerate={
+                    field.type === 'password'
+                      ? () => setCustomValue(field.id, generatePassword(DEFAULT_PASSWORD))
+                      : field.type === 'pin'
+                        ? () => setCustomValue(field.id, generatePin(6))
+                        : undefined
+                  }
+                />
+              )}
+            </View>
+            <PressableScale
+              haptic="light"
+              style={styles.customDelete}
+              onPress={() => setCustomFields((list) => list.filter((f) => f.id !== field.id))}
+            >
+              <Ionicons name="trash-outline" size={18} color={theme.colors.danger} />
+            </PressableScale>
+          </View>
+        ))}
+
+        {composerOpen ? (
+          <View style={[styles.composer, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}>
+            <FormField
+              label={t('custom.nameLabel')}
+              value={composerName}
+              onChangeText={setComposerName}
+              placeholder={t('custom.namePlaceholder')}
+              autoFocus
+            />
+            <SelectField
+              label={t('custom.typeLabel')}
+              value={composerType}
+              options={CUSTOM_FIELD_TYPES.map((value) => ({ value, label: value }))}
+              onChange={(value) => setComposerType((value || 'text') as CustomFieldType)}
+              labelFor={(key) => t(`customTypes.${key}` as Parameters<typeof t>[0])}
+            />
+            <View style={styles.composerActions}>
+              <PressableScale
+                haptic="light"
+                style={[styles.composerCancel, { borderColor: theme.colors.border }]}
+                onPress={() => {
+                  setComposerOpen(false);
+                  setComposerName('');
+                }}
+              >
+                <Text style={[typo.caption, { color: theme.colors.textSecondary }]}>{t('common.cancel')}</Text>
+              </PressableScale>
+              <PressableScale
+                haptic="medium"
+                style={[
+                  styles.composerConfirm,
+                  { backgroundColor: theme.colors.accentSoft, opacity: composerName.trim() ? 1 : 0.5 },
+                ]}
+                disabled={!composerName.trim()}
+                onPress={addCustomField}
+              >
+                <Text style={[typo.caption, { color: theme.colors.accent }]}>{t('custom.confirm')}</Text>
+              </PressableScale>
+            </View>
+          </View>
+        ) : (
+          <PressableScale
+            haptic="light"
+            style={[styles.addCustomButton, { borderColor: theme.colors.border }]}
+            onPress={() => setComposerOpen(true)}
+          >
+            <Ionicons name="add-circle-outline" size={18} color={theme.colors.accent} />
+            <Text style={[typo.caption, { color: theme.colors.accent }]}>{t('custom.add')}</Text>
+          </PressableScale>
+        )}
+
         <FormField
           label={t('fields.notes')}
           value={notes}
@@ -208,5 +345,49 @@ const styles = StyleSheet.create({
   },
   fieldBlock: {
     gap: spacing.sm,
+  },
+  customRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    gap: spacing.xs,
+  },
+  customDelete: {
+    width: 40,
+    height: 48,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  composer: {
+    borderRadius: radius.lg,
+    borderWidth: StyleSheet.hairlineWidth,
+    padding: spacing.lg,
+    gap: spacing.md,
+  },
+  composerActions: {
+    flexDirection: 'row',
+    gap: spacing.sm,
+  },
+  composerCancel: {
+    flex: 1,
+    alignItems: 'center',
+    paddingVertical: spacing.md - 2,
+    borderRadius: radius.md,
+    borderWidth: 1,
+  },
+  composerConfirm: {
+    flex: 1,
+    alignItems: 'center',
+    paddingVertical: spacing.md - 2,
+    borderRadius: radius.md,
+  },
+  addCustomButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    paddingVertical: spacing.md - 2,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderStyle: 'dashed',
   },
 });

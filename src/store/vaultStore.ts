@@ -4,7 +4,14 @@ import * as service from '@/crypto/vaultService';
 import { fieldsOf } from '@/constants/schema';
 import * as attachments from '@/lib/attachments';
 import type { ImportedLogin } from '@/lib/importers/bitwarden';
-import type { AttachmentMeta, EntryDataMap, EntryKind, VaultEntry, VaultEntryOf } from '@/types/vault';
+import type {
+  AttachmentMeta,
+  CustomField,
+  EntryDataMap,
+  EntryKind,
+  VaultEntry,
+  VaultEntryOf,
+} from '@/types/vault';
 
 export type VaultStatus = 'loading' | 'none' | 'locked' | 'unlocked';
 
@@ -26,10 +33,11 @@ interface VaultState {
     title: string,
     data: EntryDataMap[K],
     notes?: string,
+    customFields?: CustomField[],
   ) => VaultEntry;
   updateEntry: <K extends EntryKind>(
     id: string,
-    patch: { title?: string; notes?: string; data?: EntryDataMap[K] },
+    patch: { title?: string; notes?: string; data?: EntryDataMap[K]; customFields?: CustomField[] },
   ) => void;
   removeEntry: (id: string) => void;
   toggleFavorite: (id: string) => void;
@@ -94,7 +102,7 @@ export const useVault = create<VaultState>()((set, get) => ({
     set({ status: 'none', vaultKey: null, entries: [] });
   },
 
-  addEntry: (kind, title, data, notes) => {
+  addEntry: (kind, title, data, notes, customFields) => {
     const now = Date.now();
     const entry: VaultEntryOf<typeof kind> = {
       id: Crypto.randomUUID(),
@@ -102,6 +110,7 @@ export const useVault = create<VaultState>()((set, get) => ({
       title: title.trim(),
       favorite: false,
       notes: notes?.trim() || undefined,
+      customFields: customFields && customFields.length > 0 ? customFields : undefined,
       createdAt: now,
       updatedAt: now,
       secretUpdatedAt: now,
@@ -120,6 +129,9 @@ export const useVault = create<VaultState>()((set, get) => ({
         const next = { ...entry, updatedAt: now } as VaultEntry;
         if (patch.title !== undefined) next.title = patch.title.trim();
         if (patch.notes !== undefined) next.notes = patch.notes.trim() || undefined;
+        if (patch.customFields !== undefined) {
+          next.customFields = patch.customFields.length > 0 ? patch.customFields : undefined;
+        }
         if (patch.data !== undefined) {
           const keys = secretKeys(entry.kind);
           const oldData = entry.data as Record<string, string | undefined>;
