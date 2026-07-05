@@ -25,12 +25,16 @@ export function FaviconBadge({ entry, size = 44 }: Props) {
   const gradient = kindGradient(entry.kind);
 
   if (showFavicon) {
+    // The favicon fills the whole badge (like the category icons); a small
+    // inset keeps it off the rounded corners, "cover" crops the source's own
+    // transparent margins so the logo reads large instead of floating.
+    const inset = Math.round(size * 0.1);
     return (
       <View style={[styles.shell, { width: size, height: size, borderRadius: radius.md }]}>
         <Image
           source={{ uri: sources[sourceIndex] }}
-          style={{ width: size * 0.62, height: size * 0.62, borderRadius: 6 }}
-          contentFit="contain"
+          style={{ width: size - inset, height: size - inset, borderRadius: radius.md - 4 }}
+          contentFit="cover"
           transition={150}
           recyclingKey={domain}
           onError={() => setSourceIndex((i) => i + 1)}
