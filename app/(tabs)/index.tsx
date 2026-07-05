@@ -42,7 +42,12 @@ export default function VaultScreen() {
         return true;
       })
       .filter((entry) => !q || matchesQuery(entry, q))
-      .sort((a, b) => Number(b.favorite) - Number(a.favorite) || b.updatedAt - a.updatedAt);
+      // Favorites pinned on top, then alphabetically A–Z (umlaut-aware).
+      .sort(
+        (a, b) =>
+          Number(b.favorite) - Number(a.favorite) ||
+          a.title.localeCompare(b.title, undefined, { sensitivity: 'base', numeric: true }),
+      );
   }, [entries, filter, query]);
 
   const filters: { value: Filter; label: string }[] = [
