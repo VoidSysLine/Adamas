@@ -5,18 +5,20 @@ import type { VaultEntry } from '@/types/vault';
 
 /** Security audit engine — every check derives from the schema registry. */
 
-export type AuditIssueType = 'weak' | 'reused' | 'old' | 'expired' | 'expiring' | 'noTotp';
+export type AuditIssueType = 'pwned' | 'weak' | 'reused' | 'old' | 'expired' | 'expiring' | 'noTotp';
 
 export interface AuditFinding {
   type: AuditIssueType;
   entry: VaultEntry;
-  /** Extra context, e.g. days until expiry. */
+  /** Extra context, e.g. days until expiry or breach count. */
   detail?: string;
 }
 
 export interface AuditReport {
-  /** 0–100, animated on the audit screen. */
+  /** Percentage (0–100) of logins with no critical finding — the ring value. */
   score: number;
+  loginCount: number;
+  secureLogins: number;
   findings: Record<AuditIssueType, AuditFinding[]>;
   totalIssues: number;
   checkedEntries: number;
@@ -25,23 +27,11 @@ export interface AuditReport {
 const OLD_SECRET_DAYS = 365;
 const EXPIRY_WARNING_DAYS = 30;
 
-/** Issue weights for the score; informational findings weigh less. */
-const WEIGHTS: Record<AuditIssueType, number> = {
-  weak: 14,
-  reused: 12,
-  expired: 10,
-  old: 6,
-  expiring: 4,
-  noTotp: 2,
-};
-
 /**
- * Per-category penalty ceiling. "No 2FA" is informational — without a cap,
- * a large imported vault would flatline the score at 0 from this alone.
+ * Findings that make a login count as "not secure" for the percentage.
+ * `noTotp` and expiry hints are surfaced as sections but stay informational.
  */
-const PENALTY_CAPS: Partial<Record<AuditIssueType, number>> = {
-  noTotp: 15,
-};
+const CRITICAL_TYPES: AuditIssueType[] = ['pwned', 'weak', 'reused', 'old'];
 
 /** 2FA handled outside Adamas, or the service simply offers none (N/A). */
 function twoFactorHandledElsewhere(twoFactor: string | undefined): boolean {
@@ -56,8 +46,14 @@ function passwordsOf(entry: VaultEntry): string[] {
     .filter((v): v is string => !!v);
 }
 
-export function runAudit(entries: VaultEntry[], now: number = Date.now()): AuditReport {
+export function runAudit(
+  entries: VaultEntry[],
+  now: number = Date.now(),
+  /** Optional HIBP results: password → breach count (from the opt-in check). */
+  pwnedCounts?: Map<string, number>,
+): AuditReport {
   const findings: Record<AuditIssueType, AuditFinding[]> = {
+    pwned: [],
     weak: [],
     reused: [],
     old: [],
@@ -71,6 +67,14 @@ export function runAudit(entries: VaultEntry[], now: number = Date.now()): Audit
   for (const entry of entries) {
     const data = entry.data as Record<string, string | undefined>;
     const passwords = passwordsOf(entry);
+
+    for (const password of passwords) {
+      const breachCount = pwnedCounts?.get(password);
+      if (breachCount) {
+        findings.pwned.push({ type: 'pwned', entry, detail: `${breachCount.toLocaleString()}×` });
+        break;
+      }
+    }
 
     for (const password of passwords) {
       if (estimateStrength(password).level <= 1) {
@@ -124,16 +128,25 @@ export function runAudit(entries: VaultEntry[], now: number = Date.now()): Audit
     }
   }
 
-  let penalty = 0;
   let totalIssues = 0;
   for (const type of Object.keys(findings) as AuditIssueType[]) {
     totalIssues += findings[type].length;
-    const typePenalty = findings[type].length * WEIGHTS[type];
-    penalty += Math.min(typePenalty, PENALTY_CAPS[type] ?? Number.POSITIVE_INFINITY);
   }
 
+  // Score = share of logins untouched by any critical finding.
+  const loginCount = entries.filter((e) => e.kind === 'login').length;
+  const insecureLoginIds = new Set<string>();
+  for (const type of CRITICAL_TYPES) {
+    for (const finding of findings[type]) {
+      if (finding.entry.kind === 'login') insecureLoginIds.add(finding.entry.id);
+    }
+  }
+  const secureLogins = loginCount - insecureLoginIds.size;
+
   return {
-    score: entries.length === 0 ? 100 : Math.max(0, Math.round(100 - penalty)),
+    score: loginCount === 0 ? 100 : Math.round((secureLogins / loginCount) * 100),
+    loginCount,
+    secureLogins,
     findings,
     totalIssues,
     checkedEntries: entries.length,

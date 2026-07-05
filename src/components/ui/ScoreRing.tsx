@@ -19,10 +19,12 @@ interface Props {
   score: number;
   size?: number;
   label?: string;
+  /** Appended to the animated number, e.g. "%". */
+  suffix?: string;
 }
 
 /** Animated security-score gauge: the arc sweeps in and the number counts up. */
-export function ScoreRing({ score, size = 170, label }: Props) {
+export function ScoreRing({ score, size = 170, label, suffix = '' }: Props) {
   const theme = useTheme();
   const stroke = 13;
   const r = (size - stroke) / 2;
@@ -70,7 +72,10 @@ export function ScoreRing({ score, size = 170, label }: Props) {
         />
       </Svg>
       <View style={styles.center}>
-        <Text style={[styles.score, { color: theme.colors.text }]}>{displayed}</Text>
+        <Text style={[styles.score, { color: theme.colors.text }]}>
+          {displayed}
+          {suffix.length > 0 && <Text style={styles.suffix}>{suffix}</Text>}
+        </Text>
         {label && <Text style={[typo.caption, { color: theme.colors.textSecondary }]}>{label}</Text>}
       </View>
     </View>
@@ -86,5 +91,10 @@ const styles = StyleSheet.create({
     fontFamily: fonts.displayHeavy,
     fontSize: 44,
     letterSpacing: -1.5,
+  },
+  suffix: {
+    fontFamily: fonts.displaySemi,
+    fontSize: 24,
+    letterSpacing: 0,
   },
 });

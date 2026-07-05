@@ -71,7 +71,7 @@ export default function ToolsScreen() {
               <Text style={[typo.caption, { color: theme.colors.textSecondary }]}>{t('tools.auditSub')}</Text>
             </View>
             <View style={styles.scoreBadge}>
-              <Text style={[styles.scoreText, { color: scoreColor }]}>{report.score}</Text>
+              <Text style={[styles.scoreText, { color: scoreColor }]}>{report.score}%</Text>
               <Text style={[typo.micro, { color: theme.colors.textTertiary }]}>{t('tools.score')}</Text>
             </View>
           </GlassCard>

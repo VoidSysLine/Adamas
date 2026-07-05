@@ -1,19 +1,21 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import React, { useMemo } from 'react';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import React, { useMemo, useState } from 'react';
+import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { GlassCard } from '@/components/ui/GlassCard';
-import { PressableScale } from '@/components/ui/PressableScale';
+import { PressableScale, triggerHaptic } from '@/components/ui/PressableScale';
 import { ScoreRing } from '@/components/ui/ScoreRing';
 import type { IoniconName } from '@/constants/schema';
 import { useT } from '@/i18n';
 import { runAudit, type AuditIssueType } from '@/lib/audit';
+import { checkPwnedPasswords } from '@/lib/hibp';
 import { useVault } from '@/store/vaultStore';
 import { radius, spacing, type as typo, useTheme } from '@/theme';
 
 const SECTION_META: Record<AuditIssueType, { icon: IoniconName; color: string }> = {
+  pwned: { icon: 'skull', color: '#F43F5E' },
   weak: { icon: 'alert-circle', color: '#FB7185' },
   reused: { icon: 'copy', color: '#FB923C' },
   expired: { icon: 'time', color: '#F87171' },
@@ -22,7 +24,7 @@ const SECTION_META: Record<AuditIssueType, { icon: IoniconName; color: string }>
   noTotp: { icon: 'shield-outline', color: '#60A5FA' },
 };
 
-const SECTION_ORDER: AuditIssueType[] = ['weak', 'reused', 'expired', 'expiring', 'old', 'noTotp'];
+const SECTION_ORDER: AuditIssueType[] = ['pwned', 'weak', 'reused', 'expired', 'expiring', 'old', 'noTotp'];
 
 export default function AuditScreen() {
   const theme = useTheme();
@@ -30,7 +32,29 @@ export default function AuditScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const entries = useVault((s) => s.entries);
-  const report = useMemo(() => runAudit(entries), [entries]);
+
+  const [pwnedCounts, setPwnedCounts] = useState<Map<string, number> | null>(null);
+  const [hibpState, setHibpState] = useState<'idle' | 'checking' | 'done' | 'error'>('idle');
+
+  const report = useMemo(
+    () => runAudit(entries, Date.now(), pwnedCounts ?? undefined),
+    [entries, pwnedCounts],
+  );
+
+  const runHibpCheck = async () => {
+    if (hibpState === 'checking') return;
+    setHibpState('checking');
+    try {
+      const passwords = entries.flatMap((e) => (e.kind === 'login' && e.data.password ? [e.data.password] : []));
+      const result = await checkPwnedPasswords(passwords);
+      setPwnedCounts(result);
+      setHibpState('done');
+      triggerHaptic(result.size > 0 ? 'warning' : 'success');
+    } catch {
+      setHibpState('error');
+      triggerHaptic('error');
+    }
+  };
 
   return (
     <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
@@ -44,8 +68,46 @@ export default function AuditScreen() {
 
       <ScrollView contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + spacing.xl }]}>
         <View style={styles.ringWrap}>
-          <ScoreRing score={report.score} label={t('tools.score')} />
+          <ScoreRing score={report.score} suffix="%" label={t('audit.percentLabel')} />
+          <Text style={[typo.caption, { color: theme.colors.textSecondary }]}>
+            {t('audit.secureRatio', { secure: report.secureLogins, total: report.loginCount })}
+          </Text>
         </View>
+
+        <Animated.View entering={FadeInDown.delay(80).springify().damping(18)}>
+          <GlassCard style={styles.hibpCard}>
+            <View style={styles.sectionHeader}>
+              <View style={[styles.sectionIcon, { backgroundColor: 'rgba(244,63,94,0.13)' }]}>
+                <Ionicons name="earth" size={18} color="#F43F5E" />
+              </View>
+              <View style={{ flex: 1, gap: 2 }}>
+                <Text style={[typo.headline, { color: theme.colors.text }]}>{t('audit.hibpTitle')}</Text>
+                <Text style={[typo.caption, { color: theme.colors.textSecondary }]}>
+                  {hibpState === 'done'
+                    ? pwnedCounts && pwnedCounts.size > 0
+                      ? t('audit.hibpFound', { count: report.findings.pwned.length })
+                      : t('audit.hibpNone')
+                    : hibpState === 'error'
+                      ? t('audit.hibpError')
+                      : t('audit.hibpHint')}
+                </Text>
+              </View>
+              <PressableScale
+                haptic="medium"
+                style={[styles.hibpButton, { backgroundColor: theme.colors.accentSoft }]}
+                onPress={() => void runHibpCheck()}
+              >
+                {hibpState === 'checking' ? (
+                  <ActivityIndicator size="small" color={theme.colors.accent} />
+                ) : (
+                  <Text style={[typo.caption, { color: theme.colors.accent }]}>
+                    {hibpState === 'idle' ? t('audit.hibpCheck') : t('audit.hibpRecheck')}
+                  </Text>
+                )}
+              </PressableScale>
+            </View>
+          </GlassCard>
+        </Animated.View>
 
         {report.totalIssues === 0 ? (
           <Animated.View entering={FadeInDown.delay(150).springify().damping(18)} style={styles.perfect}>
@@ -87,6 +149,11 @@ export default function AuditScreen() {
                       <Text style={[typo.body, { color: theme.colors.text, flex: 1 }]} numberOfLines={1}>
                         {finding.entry.title}
                       </Text>
+                      {finding.detail && type === 'pwned' && (
+                        <Text style={[typo.caption, { color: meta.color, marginRight: 4 }]}>
+                          {finding.detail}
+                        </Text>
+                      )}
                       <Ionicons name="chevron-forward" size={15} color={theme.colors.textTertiary} />
                     </PressableScale>
                   ))}
@@ -119,7 +186,18 @@ const styles = StyleSheet.create({
   },
   ringWrap: {
     alignItems: 'center',
+    gap: spacing.sm,
     marginVertical: spacing.lg,
+  },
+  hibpCard: {
+    padding: spacing.lg,
+  },
+  hibpButton: {
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm + 2,
+    borderRadius: radius.full,
+    minWidth: 84,
+    alignItems: 'center',
   },
   perfect: {
     alignItems: 'center',
