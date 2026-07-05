@@ -95,10 +95,30 @@ export async function unlockWithBiometrics(
   }
 }
 
+/** Rewrites legacy entry shapes from older app versions on load. */
+function migrate(doc: VaultDocument): VaultDocument {
+  return {
+    ...doc,
+    entries: doc.entries.map((entry) => {
+      // v1 'socialSecurity' became 'healthInsurance' (the German SVNR lives
+      // at the pension kind; health insurance has its own KVNR).
+      if ((entry.kind as string) === 'socialSecurity') {
+        const old = entry.data as { number?: string; provider?: string };
+        return {
+          ...entry,
+          kind: 'healthInsurance',
+          data: { number: old.number, insurer: old.provider },
+        } as typeof entry;
+      }
+      return entry;
+    }),
+  };
+}
+
 async function loadVault(vaultKey: string): Promise<VaultDocument> {
   const raw = await AsyncStorage.getItem(VAULT_KEY);
   if (!raw) return EMPTY_DOC;
-  return JSON.parse(decrypt(JSON.parse(raw) as CipherBlob, vaultKey)) as VaultDocument;
+  return migrate(JSON.parse(decrypt(JSON.parse(raw) as CipherBlob, vaultKey)) as VaultDocument);
 }
 
 export async function saveVault(doc: VaultDocument, vaultKey: string): Promise<void> {

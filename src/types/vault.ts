@@ -19,7 +19,7 @@ export type EntryKind =
   | 'passport'
   | 'vehicle'
   | 'taxId'
-  | 'socialSecurity'
+  | 'healthInsurance'
   | 'pension'
   | 'creditCard'
   | 'bankAccount'
@@ -107,9 +107,11 @@ export interface PensionData {
   referenceNumber?: string;
 }
 
-export interface SocialSecurityData {
+export interface HealthInsuranceData {
+  /** Krankenkasse / insurer. */
+  insurer?: string;
+  /** Versichertennummer (KVNR) — 1 letter + 9 digits on the health card. */
   number?: string;
-  provider?: string;
 }
 
 export interface CreditCardData {
@@ -195,7 +197,7 @@ export interface EntryDataMap {
   passport: PassportData;
   vehicle: VehicleData;
   taxId: TaxIdData;
-  socialSecurity: SocialSecurityData;
+  healthInsurance: HealthInsuranceData;
   pension: PensionData;
   creditCard: CreditCardData;
   bankAccount: BankAccountData;

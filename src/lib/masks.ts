@@ -15,6 +15,7 @@ export type MaskKind =
   | 'taxIdDe'
   | 'taxNumberDe'
   | 'svnrDe'
+  | 'kvnrDe'
   | 'base32'
   | 'vin'
   | 'digits4'
@@ -110,6 +111,11 @@ export const MASKS: Record<MaskKind, Mask> = {
     strip: (s) => shape(onlyUpperAlnum(s), 'DDDDDDDDLDDD'),
     format: (raw) => groupAt(raw, [2, 8, 9]),
     copyRaw: true,
+  },
+  // German Krankenversichertennummer (KVNR): 1 letter + 9 digits (eGK).
+  kvnrDe: {
+    strip: (s) => shape(onlyUpperAlnum(s), 'LDDDDDDDDD'),
+    format: (raw) => raw,
   },
   // Base32 TOTP seed, grouped for readability; decoder ignores spaces.
   base32: {

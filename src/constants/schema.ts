@@ -178,12 +178,12 @@ export const KIND_REGISTRY: { [K in EntryKind]: KindMeta<K> } = {
       { key: 'referenceNumber', label: 'referenceNumber', type: 'code', hint: 'referenceNumberExample' },
     ],
   },
-  socialSecurity: {
+  healthInsurance: {
     category: 'documents',
     icon: 'medkit-outline',
     fields: [
-      { key: 'number', label: 'ssn', type: 'text', mask: 'svnrDe', hint: 'ssnExample', secure: true },
-      { key: 'provider', label: 'provider', type: 'text', hint: 'insuranceExample' },
+      { key: 'insurer', label: 'insurer', type: 'text', hint: 'insuranceExample' },
+      { key: 'number', label: 'kvnr', type: 'code', mask: 'kvnrDe', hint: 'kvnrExample', secure: true },
     ],
   },
   creditCard: {
@@ -297,7 +297,7 @@ export const CATEGORIES: Record<Category, CategoryMeta> = {
   documents: {
     icon: 'id-card-outline',
     gradient: ['#FDE68A', '#F59E0B'],
-    kinds: ['nationalId', 'driversLicense', 'passport', 'vehicle', 'taxId', 'socialSecurity', 'pension'],
+    kinds: ['nationalId', 'driversLicense', 'passport', 'vehicle', 'taxId', 'healthInsurance', 'pension'],
   },
   finance: { icon: 'card-outline', gradient: ['#6EE7B7', '#10B981'], kinds: ['creditCard', 'bankAccount', 'crypto'] },
   tech: {
