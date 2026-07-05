@@ -95,6 +95,20 @@ export default function ToolsScreen() {
             </View>
             <Ionicons name="chevron-forward" size={17} color={theme.colors.textTertiary} />
           </PressableScale>
+          <PressableScale
+            haptic="light"
+            style={[styles.row, { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: theme.colors.border }]}
+            onPress={() => router.push('/import-totp')}
+          >
+            <View style={[styles.rowIcon, { backgroundColor: theme.colors.accentSoft }]}>
+              <Ionicons name="timer-outline" size={19} color={theme.colors.accent} />
+            </View>
+            <View style={styles.text}>
+              <Text style={[typo.headline, { color: theme.colors.text }]}>{t('importer.totp')}</Text>
+              <Text style={[typo.caption, { color: theme.colors.textSecondary }]}>{t('importer.totpSub')}</Text>
+            </View>
+            <Ionicons name="chevron-forward" size={17} color={theme.colors.textTertiary} />
+          </PressableScale>
           {(
             [
               { key: 'onePassword', icon: 'key-outline' },

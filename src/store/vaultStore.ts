@@ -43,6 +43,11 @@ interface VaultState {
   toggleFavorite: (id: string) => void;
   /** Batch import (e.g. Bitwarden): one persist, original timestamps kept. */
   importLogins: (logins: ImportedLogin[]) => number;
+  /** TOTP import: fills empty totpSeed fields and creates logins for the rest. */
+  importTotp: (
+    matches: { entryId: string; seed: string }[],
+    newLogins: { title: string; account?: string; seed: string }[],
+  ) => { updated: number; created: number };
   /** Encrypts and stores an image; returns false when the entry is at its limit. */
   addAttachment: (entryId: string, input: { name: string; mime: string; base64: string }) => Promise<boolean>;
   removeAttachment: (entryId: string, attachmentId: string) => Promise<void>;
@@ -183,6 +188,36 @@ export const useVault = create<VaultState>()((set, get) => ({
     set({ entries: [...imported, ...get().entries] });
     persist(get);
     return imported.length;
+  },
+
+  importTotp: (matches, newLogins) => {
+    const now = Date.now();
+    const bySeedTarget = new Map(matches.map((m) => [m.entryId, m.seed]));
+    const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+    const updated = get().entries.map((entry) => {
+      const seed = bySeedTarget.get(entry.id);
+      if (!seed || entry.kind !== 'login' || entry.data.totpSeed) return entry;
+      return { ...entry, updatedAt: now, data: { ...entry.data, totpSeed: seed } } as VaultEntry;
+    });
+
+    const created: VaultEntry[] = newLogins.map((item) => ({
+      id: Crypto.randomUUID(),
+      kind: 'login',
+      title: item.title,
+      favorite: false,
+      createdAt: now,
+      updatedAt: now,
+      data: {
+        totpSeed: item.seed,
+        email: item.account && EMAIL_RE.test(item.account) ? item.account : undefined,
+        username: item.account && !EMAIL_RE.test(item.account) ? item.account : undefined,
+      },
+    }));
+
+    set({ entries: [...created, ...updated] });
+    persist(get);
+    return { updated: bySeedTarget.size, created: created.length };
   },
 
   addAttachment: async (entryId, input) => {
