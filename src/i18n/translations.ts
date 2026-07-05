@@ -253,6 +253,10 @@ export const de = {
     added: 'Foto verschlüsselt gespeichert',
     tooLarge: 'Bild zu groß — bitte ein kleineres wählen.',
     deleteTitle: 'Anhang löschen?',
+    share: 'Teilen',
+    save: 'Speichern',
+    saved: 'In Fotos gespeichert',
+    permissionDenied: 'Kein Foto-Zugriff — bitte Berechtigung in den Einstellungen erteilen.',
   },
   wifiQr: {
     title: 'WLAN-QR-Code',
@@ -627,6 +631,10 @@ export const en: Translations = {
     added: 'Photo stored encrypted',
     tooLarge: 'Image too large — please pick a smaller one.',
     deleteTitle: 'Delete attachment?',
+    share: 'Share',
+    save: 'Save',
+    saved: 'Saved to Photos',
+    permissionDenied: 'No photo access — please grant permission in Settings.',
   },
   wifiQr: {
     title: 'Wi-Fi QR Code',

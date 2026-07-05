@@ -1,7 +1,10 @@
 import { Ionicons } from '@expo/vector-icons';
+import * as FileSystem from 'expo-file-system/legacy';
 import { Image } from 'expo-image';
 import * as ImageManipulator from 'expo-image-manipulator';
 import * as ImagePicker from 'expo-image-picker';
+import * as MediaLibrary from 'expo-media-library';
+import * as Sharing from 'expo-sharing';
 import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, Alert, Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 import { GlassCard } from '@/components/ui/GlassCard';
@@ -22,20 +25,21 @@ function AttachmentThumb({
   onDelete,
 }: {
   meta: AttachmentMeta;
-  onOpen: (uri: string) => void;
+  onOpen: (meta: AttachmentMeta, base64: string) => void;
   onDelete: () => void;
 }) {
   const theme = useTheme();
   const vaultKey = useVault((s) => s.vaultKey);
-  const [uri, setUri] = useState<string | null>(null);
+  const [payload, setPayload] = useState<string | null>(null);
   const [failed, setFailed] = useState(false);
+  const uri = payload ? `data:${meta.mime};base64,${payload}` : null;
 
   useEffect(() => {
     let cancelled = false;
     if (!vaultKey) return;
     loadAttachment(meta.id, vaultKey)
       .then((base64) => {
-        if (!cancelled) setUri(`data:${meta.mime};base64,${base64}`);
+        if (!cancelled) setPayload(base64);
       })
       .catch(() => {
         if (!cancelled) setFailed(true);
@@ -43,14 +47,14 @@ function AttachmentThumb({
     return () => {
       cancelled = true;
     };
-  }, [meta.id, meta.mime, vaultKey]);
+  }, [meta.id, vaultKey]);
 
   return (
     <View>
       <PressableScale
         haptic="light"
         style={[styles.thumb, { backgroundColor: theme.colors.surfaceAlt, borderColor: theme.colors.border }]}
-        onPress={() => uri && onOpen(uri)}
+        onPress={() => payload && onOpen(meta, payload)}
       >
         {uri ? (
           <Image source={{ uri }} style={styles.thumbImage} contentFit="cover" transition={120} />
@@ -80,10 +84,59 @@ export function AttachmentsCard({ entry }: { entry: VaultEntry }) {
   const removeAttachment = useVault((s) => s.removeAttachment);
 
   const [busy, setBusy] = useState(false);
-  const [viewerUri, setViewerUri] = useState<string | null>(null);
+  const [viewer, setViewer] = useState<{ meta: AttachmentMeta; base64: string } | null>(null);
+  const [exporting, setExporting] = useState<'share' | 'save' | null>(null);
 
   const items = entry.attachments ?? [];
   const canAdd = items.length < MAX_ATTACHMENTS_PER_ENTRY;
+
+  /** Writes a temporary unencrypted copy for the share/save action. */
+  const exportToCache = async (meta: AttachmentMeta, base64: string): Promise<string> => {
+    const uri = `${FileSystem.cacheDirectory}adamas-${meta.id}.jpg`;
+    await FileSystem.writeAsStringAsync(uri, base64, { encoding: FileSystem.EncodingType.Base64 });
+    return uri;
+  };
+
+  const onShare = async () => {
+    if (!viewer || exporting) return;
+    setExporting('share');
+    let uri: string | null = null;
+    try {
+      uri = await exportToCache(viewer.meta, viewer.base64);
+      if (await Sharing.isAvailableAsync()) {
+        await Sharing.shareAsync(uri, { mimeType: viewer.meta.mime, dialogTitle: viewer.meta.name });
+      }
+    } catch {
+      triggerHaptic('error');
+    } finally {
+      // Remove the plaintext copy once the share sheet is dismissed.
+      if (uri) await FileSystem.deleteAsync(uri, { idempotent: true }).catch(() => {});
+      setExporting(null);
+    }
+  };
+
+  const onSaveToPhotos = async () => {
+    if (!viewer || exporting) return;
+    setExporting('save');
+    let uri: string | null = null;
+    try {
+      const permission = await MediaLibrary.requestPermissionsAsync(true);
+      if (!permission.granted) {
+        triggerHaptic('warning');
+        toast({ message: t('attachments.permissionDenied'), icon: 'alert-circle-outline', tone: 'danger' });
+        return;
+      }
+      uri = await exportToCache(viewer.meta, viewer.base64);
+      await MediaLibrary.saveToLibraryAsync(uri);
+      triggerHaptic('success');
+      toast({ message: t('attachments.saved'), icon: 'images-outline', tone: 'success' });
+    } catch {
+      triggerHaptic('error');
+    } finally {
+      if (uri) await FileSystem.deleteAsync(uri, { idempotent: true }).catch(() => {});
+      setExporting(null);
+    }
+  };
 
   const importImage = async (source: 'camera' | 'library') => {
     if (busy) return;
@@ -145,7 +198,12 @@ export function AttachmentsCard({ entry }: { entry: VaultEntry }) {
       <Text style={[typo.micro, { color: theme.colors.textTertiary }]}>{t('attachments.title')}</Text>
       <View style={styles.row}>
         {items.map((meta) => (
-          <AttachmentThumb key={meta.id} meta={meta} onOpen={setViewerUri} onDelete={() => confirmDelete(meta)} />
+          <AttachmentThumb
+            key={meta.id}
+            meta={meta}
+            onOpen={(m, base64) => setViewer({ meta: m, base64 })}
+            onDelete={() => confirmDelete(meta)}
+          />
         ))}
         {canAdd && (
           <View style={styles.addColumn}>
@@ -178,11 +236,39 @@ export function AttachmentsCard({ entry }: { entry: VaultEntry }) {
       </View>
       <Text style={[typo.caption, { color: theme.colors.textTertiary }]}>{t('attachments.hint')}</Text>
 
-      <Modal visible={viewerUri !== null} transparent animationType="fade" onRequestClose={() => setViewerUri(null)}>
-        <Pressable style={styles.viewer} onPress={() => setViewerUri(null)}>
-          {viewerUri && <Image source={{ uri: viewerUri }} style={styles.viewerImage} contentFit="contain" />}
+      <Modal visible={viewer !== null} transparent animationType="fade" onRequestClose={() => setViewer(null)}>
+        <Pressable style={styles.viewer} onPress={() => setViewer(null)}>
+          {viewer && (
+            <Image
+              source={{ uri: `data:${viewer.meta.mime};base64,${viewer.base64}` }}
+              style={styles.viewerImage}
+              contentFit="contain"
+            />
+          )}
           <View style={styles.viewerClose}>
             <Ionicons name="close-circle" size={34} color="rgba(255,255,255,0.85)" />
+          </View>
+          <View style={styles.viewerActions}>
+            <PressableScale haptic="light" style={styles.viewerButton} onPress={() => void onShare()}>
+              {exporting === 'share' ? (
+                <ActivityIndicator size="small" color="#FFFFFF" />
+              ) : (
+                <>
+                  <Ionicons name="share-outline" size={19} color="#FFFFFF" />
+                  <Text style={[typo.caption, styles.viewerButtonText]}>{t('attachments.share')}</Text>
+                </>
+              )}
+            </PressableScale>
+            <PressableScale haptic="light" style={styles.viewerButton} onPress={() => void onSaveToPhotos()}>
+              {exporting === 'save' ? (
+                <ActivityIndicator size="small" color="#FFFFFF" />
+              ) : (
+                <>
+                  <Ionicons name="download-outline" size={19} color="#FFFFFF" />
+                  <Text style={[typo.caption, styles.viewerButtonText]}>{t('attachments.save')}</Text>
+                </>
+              )}
+            </PressableScale>
           </View>
         </Pressable>
       </Modal>
@@ -250,5 +336,25 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 56,
     right: 20,
+  },
+  viewerActions: {
+    position: 'absolute',
+    bottom: 52,
+    flexDirection: 'row',
+    gap: spacing.md,
+  },
+  viewerButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    paddingHorizontal: spacing.xl,
+    paddingVertical: spacing.md,
+    borderRadius: radius.full,
+    backgroundColor: 'rgba(255,255,255,0.16)',
+    minWidth: 132,
+  },
+  viewerButtonText: {
+    color: '#FFFFFF',
   },
 });
