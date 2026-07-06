@@ -12,7 +12,8 @@ import { FaviconBadge } from './FaviconBadge';
 interface Props {
   entry: VaultEntry;
   index: number;
-  onPress: () => void;
+  /** Stable callback — receives the entry id so the parent can stay memoized. */
+  onPress: (id: string) => void;
 }
 
 function subtitle(entry: VaultEntry): string {
@@ -51,14 +52,14 @@ function subtitle(entry: VaultEntry): string {
   }
 }
 
-export function EntryListItem({ entry, index, onPress }: Props) {
+function EntryListItemBase({ entry, index, onPress }: Props) {
   const theme = useTheme();
   const t = useT();
   const sub = subtitle(entry) || t(`kinds.${entry.kind}`);
 
   return (
-    <Animated.View entering={FadeInDown.delay(Math.min(index, 12) * 40).springify().damping(18)}>
-      <PressableScale onPress={onPress} haptic="light">
+    <Animated.View entering={FadeInDown.delay(Math.min(index, 10) * 35).springify().damping(18)}>
+      <PressableScale onPress={() => onPress(entry.id)} haptic="light">
         <GlassCard style={styles.card}>
           <FaviconBadge entry={entry} />
           <View style={styles.textColumn}>
@@ -76,6 +77,16 @@ export function EntryListItem({ entry, index, onPress }: Props) {
     </Animated.View>
   );
 }
+
+/**
+ * Memoized so re-sorting/searching only re-renders items whose data actually
+ * changed. `index` is deliberately ignored — it only seeds the mount-time
+ * entering animation and would otherwise bust the memo on every reorder.
+ */
+export const EntryListItem = React.memo(
+  EntryListItemBase,
+  (prev, next) => prev.entry === next.entry && prev.onPress === next.onPress,
+);
 
 const styles = StyleSheet.create({
   card: {

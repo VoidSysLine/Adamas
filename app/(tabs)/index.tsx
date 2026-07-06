@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
-import React, { useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { FlatList, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import Animated, { FadeIn } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -65,6 +65,16 @@ export default function VaultScreen() {
     triggerHaptic('selection');
     setSetting('sortMode', next);
   };
+
+  // Stable across renders so memoized rows don't re-render on every keystroke.
+  const openEntry = useCallback((id: string) => router.push(`/entry/${id}`), [router]);
+  const keyExtractor = useCallback((item: VaultEntry) => item.id, []);
+  const renderItem = useCallback(
+    ({ item, index }: { item: VaultEntry; index: number }) => (
+      <EntryListItem entry={item} index={index} onPress={openEntry} />
+    ),
+    [openEntry],
+  );
 
   const filters: { value: Filter; label: string }[] = [
     { value: 'all', label: t('common.all') },
@@ -164,12 +174,14 @@ export default function VaultScreen() {
       ) : (
         <FlatList
           data={filtered}
-          keyExtractor={(item) => item.id}
+          keyExtractor={keyExtractor}
           contentContainerStyle={{ paddingBottom: insets.bottom + 110, paddingTop: spacing.sm }}
           keyboardShouldPersistTaps="handled"
-          renderItem={({ item, index }) => (
-            <EntryListItem entry={item} index={index} onPress={() => router.push(`/entry/${item.id}`)} />
-          )}
+          renderItem={renderItem}
+          initialNumToRender={10}
+          maxToRenderPerBatch={10}
+          windowSize={7}
+          removeClippedSubviews
         />
       )}
     </View>

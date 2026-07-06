@@ -65,9 +65,10 @@ interface Props {
 /**
  * Entry avatar with a graceful degradation chain:
  * uploaded avatar (identities) → real favicon (Google → DuckDuckGo) →
- * category-gradient icon/monogram.
+ * category-gradient icon/monogram. Memoized (see export) so list re-sorts
+ * don't re-run the favicon/avatar resolution for unchanged entries.
  */
-export function FaviconBadge({ entry, size = 44 }: Props) {
+function FaviconBadgeBase({ entry, size = 44 }: Props) {
   const [sourceIndex, setSourceIndex] = useState(0);
   const vaultKey = useVault((s) => s.vaultKey);
   const [avatar, setAvatar] = useState<string | null>(null);
@@ -161,6 +162,11 @@ export function FaviconBadge({ entry, size = 44 }: Props) {
     </LinearGradient>
   );
 }
+
+export const FaviconBadge = React.memo(
+  FaviconBadgeBase,
+  (prev, next) => prev.entry === next.entry && prev.size === next.size,
+);
 
 const styles = StyleSheet.create({
   shell: {
