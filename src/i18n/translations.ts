@@ -12,6 +12,7 @@ export const de = {
     optional: 'optional',
     today: 'Heute',
     back: 'Zurück',
+    authReveal: 'Geheimnis anzeigen',
   },
   categories: {
     logins: 'Logins',
@@ -276,6 +277,9 @@ export const de = {
     auditSub: 'Analyse deines Tresors',
     score: 'Sicherheits-Score',
   },
+  clipboard: {
+    willClear: 'wird in {s}s geleert',
+  },
   avatar: {
     title: 'Profilbild',
     camera: 'Foto aufnehmen',
@@ -431,6 +435,10 @@ export const de = {
     autoLockNow: 'Sofort',
     autoLockNever: 'Nie',
     autoLockMinutes: 'Nach {min} Min.',
+    clipboardClear: 'Zwischenablage leeren',
+    clipboardSeconds: 'Nach {s} Sek.',
+    revealAuth: 'Biometrie vor Anzeige',
+    revealAuthSub: 'Face ID / PIN, bevor Geheimnisse angezeigt oder kopiert werden',
     biometrics: 'Biometrische Entsperrung',
     lockNow: 'Jetzt sperren',
     dangerZone: 'Gefahrenzone',
@@ -462,6 +470,7 @@ export const en: Translations = {
     optional: 'optional',
     today: 'Today',
     back: 'Back',
+    authReveal: 'Reveal secret',
   },
   categories: {
     logins: 'Logins',
@@ -726,6 +735,9 @@ export const en: Translations = {
     auditSub: 'Analyze your vault',
     score: 'Security score',
   },
+  clipboard: {
+    willClear: 'clears in {s}s',
+  },
   avatar: {
     title: 'Profile photo',
     camera: 'Take photo',
@@ -881,6 +893,10 @@ export const en: Translations = {
     autoLockNow: 'Immediately',
     autoLockNever: 'Never',
     autoLockMinutes: 'After {min} min',
+    clipboardClear: 'Clear clipboard',
+    clipboardSeconds: 'After {s} sec',
+    revealAuth: 'Biometrics before reveal',
+    revealAuthSub: 'Face ID / PIN before secrets are shown or copied',
     biometrics: 'Biometric unlock',
     lockNow: 'Lock now',
     dangerZone: 'Danger zone',

@@ -7,6 +7,8 @@ export type ThemePref = 'system' | 'dark' | 'light';
 export type LanguagePref = Language | 'system';
 /** Minutes in background before the vault locks. 0 = immediately, -1 = never. */
 export type AutoLockPref = 0 | 1 | 5 | 15 | -1;
+/** Seconds before a copied secret is cleared from the clipboard. 0 = never. */
+export type ClipboardClearPref = 0 | 20 | 45 | 90;
 
 interface SettingsState {
   theme: ThemePref;
@@ -14,7 +16,10 @@ interface SettingsState {
   systemScheme: 'dark' | 'light';
   language: LanguagePref;
   autoLock: AutoLockPref;
+  clipboardClear: ClipboardClearPref;
   biometricsEnabled: boolean;
+  /** Require biometric/device auth before revealing or copying a secret. */
+  revealAuth: boolean;
   appIcon: 'obsidian' | 'ice' | 'gold';
   set: <K extends keyof SettingsState>(key: K, value: SettingsState[K]) => void;
 }
@@ -26,18 +31,22 @@ export const useSettings = create<SettingsState>()(
       systemScheme: 'dark',
       language: 'system',
       autoLock: 5,
+      clipboardClear: 45,
       biometricsEnabled: true,
+      revealAuth: false,
       appIcon: 'obsidian',
       set: (key, value) => set({ [key]: value } as Pick<SettingsState, typeof key>),
     }),
     {
       name: 'adamas.settings',
       storage: createJSONStorage(() => AsyncStorage),
-      partialize: ({ theme, language, autoLock, biometricsEnabled, appIcon }) => ({
+      partialize: ({ theme, language, autoLock, clipboardClear, biometricsEnabled, revealAuth, appIcon }) => ({
         theme,
         language,
         autoLock,
+        clipboardClear,
         biometricsEnabled,
+        revealAuth,
         appIcon,
       }),
     },

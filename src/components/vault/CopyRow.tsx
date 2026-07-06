@@ -5,6 +5,8 @@ import { StyleSheet, Text, View } from 'react-native';
 import { fonts, spacing, type as typo, useTheme } from '@/theme';
 import { PressableScale, triggerHaptic } from '@/components/ui/PressableScale';
 import { useCopy } from '@/components/ui/Toast';
+import { useT } from '@/i18n';
+import { authenticateForReveal } from '@/lib/revealGuard';
 
 interface Props {
   label: string;
@@ -25,12 +27,25 @@ interface Props {
  */
 export function CopyRow({ label, value, copyValue, href, secure, mono, multiline }: Props) {
   const theme = useTheme();
+  const t = useT();
   const copy = useCopy();
   const [revealed, setRevealed] = useState(false);
 
   const masked = secure && !revealed;
   const display = masked ? '•'.repeat(Math.min(Math.max(value.length, 8), 14)) : value;
   const clipboard = copyValue ?? value;
+
+  // Secure values pass through the optional biometric gate before leaving the row.
+  const guardedCopy = async () => {
+    if (secure && !(await authenticateForReveal(t('common.authReveal')))) return;
+    await copy(label, clipboard);
+  };
+
+  const toggleReveal = async () => {
+    if (!revealed && secure && !(await authenticateForReveal(t('common.authReveal')))) return;
+    triggerHaptic('selection');
+    setRevealed((r) => !r);
+  };
 
   const openInBrowser = () => {
     if (!href) return;
@@ -40,7 +55,7 @@ export function CopyRow({ label, value, copyValue, href, secure, mono, multiline
 
   return (
     <View style={styles.row}>
-      <PressableScale haptic="none" style={styles.copyArea} onPress={() => copy(label, clipboard)}>
+      <PressableScale haptic="none" style={styles.copyArea} onPress={() => void guardedCopy()}>
         <Text style={[typo.micro, { color: theme.colors.textTertiary }]}>{label}</Text>
         <Text
           style={[
@@ -55,14 +70,7 @@ export function CopyRow({ label, value, copyValue, href, secure, mono, multiline
         </Text>
       </PressableScale>
       {secure && (
-        <PressableScale
-          haptic="none"
-          style={styles.iconButton}
-          onPress={() => {
-            triggerHaptic('selection');
-            setRevealed((r) => !r);
-          }}
-        >
+        <PressableScale haptic="none" style={styles.iconButton} onPress={() => void toggleReveal()}>
           <Ionicons
             name={revealed ? 'eye-off-outline' : 'eye-outline'}
             size={19}
@@ -75,7 +83,7 @@ export function CopyRow({ label, value, copyValue, href, secure, mono, multiline
           <Ionicons name="open-outline" size={18} color={theme.colors.accent} />
         </PressableScale>
       )}
-      <PressableScale haptic="none" style={styles.iconButton} onPress={() => copy(label, clipboard)}>
+      <PressableScale haptic="none" style={styles.iconButton} onPress={() => void guardedCopy()}>
         <Ionicons name="copy-outline" size={18} color={theme.colors.accent} />
       </PressableScale>
     </View>

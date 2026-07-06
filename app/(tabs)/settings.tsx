@@ -10,7 +10,13 @@ import { PrismGem } from '@/components/ui/PrismGem';
 import { SegmentedControl } from '@/components/ui/SegmentedControl';
 import { useToast } from '@/components/ui/Toast';
 import { useT } from '@/i18n';
-import { useSettings, type AutoLockPref, type LanguagePref, type ThemePref } from '@/store/settingsStore';
+import {
+  useSettings,
+  type AutoLockPref,
+  type ClipboardClearPref,
+  type LanguagePref,
+  type ThemePref,
+} from '@/store/settingsStore';
 import { useVault } from '@/store/vaultStore';
 import { radius, spacing, type as typo, useTheme } from '@/theme';
 
@@ -21,6 +27,7 @@ const APP_ICONS: { id: 'obsidian' | 'ice' | 'gold'; colors: [string, string] }[]
 ];
 
 const AUTO_LOCK_OPTIONS: AutoLockPref[] = [0, 1, 5, 15, -1];
+const CLIPBOARD_OPTIONS: ClipboardClearPref[] = [20, 45, 90, 0];
 
 export default function SettingsScreen() {
   const theme = useTheme();
@@ -34,6 +41,9 @@ export default function SettingsScreen() {
 
   const autoLockLabel = (value: AutoLockPref) =>
     value === 0 ? t('settings.autoLockNow') : value === -1 ? t('settings.autoLockNever') : t('settings.autoLockMinutes', { min: value });
+
+  const clipboardLabel = (value: ClipboardClearPref) =>
+    value === 0 ? t('settings.autoLockNever') : t('settings.clipboardSeconds', { s: value });
 
   const onErase = () => {
     triggerHaptic('warning');
@@ -152,6 +162,47 @@ export default function SettingsScreen() {
               </PressableScale>
             );
           })}
+        </View>
+        <Text style={[typo.caption, { color: theme.colors.textSecondary, marginTop: spacing.sm }]}>
+          {t('settings.clipboardClear')}
+        </Text>
+        <View style={styles.autoLockRow}>
+          {CLIPBOARD_OPTIONS.map((value) => {
+            const active = settings.clipboardClear === value;
+            return (
+              <PressableScale
+                key={value}
+                haptic="selection"
+                style={[
+                  styles.autoLockChip,
+                  {
+                    backgroundColor: active ? theme.colors.accentSoft : theme.colors.surfaceAlt,
+                    borderColor: active ? theme.colors.accent : theme.colors.border,
+                  },
+                ]}
+                onPress={() => settings.set('clipboardClear', value)}
+              >
+                <Text style={[typo.caption, { color: active ? theme.colors.accent : theme.colors.textSecondary }]}>
+                  {clipboardLabel(value)}
+                </Text>
+              </PressableScale>
+            );
+          })}
+        </View>
+        <View style={[styles.row, { marginTop: spacing.sm }]}>
+          <View style={{ flex: 1 }}>
+            <Text style={[typo.body, { color: theme.colors.text }]}>{t('settings.revealAuth')}</Text>
+            <Text style={[typo.caption, { color: theme.colors.textTertiary }]}>{t('settings.revealAuthSub')}</Text>
+          </View>
+          <Switch
+            value={settings.revealAuth}
+            onValueChange={(v) => {
+              triggerHaptic('selection');
+              settings.set('revealAuth', v);
+            }}
+            trackColor={{ true: theme.colors.accent, false: theme.colors.surfaceAlt }}
+            thumbColor="#FFFFFF"
+          />
         </View>
         <PressableScale
           haptic="medium"

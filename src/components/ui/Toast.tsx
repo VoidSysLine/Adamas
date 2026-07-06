@@ -6,6 +6,7 @@ import Animated, { SlideInDown, SlideOutDown } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { IoniconName } from '@/constants/schema';
 import { useT } from '@/i18n';
+import { useSettings } from '@/store/settingsStore';
 import { radius, type as typo, useTheme } from '@/theme';
 import { triggerHaptic } from './PressableScale';
 
@@ -21,7 +22,24 @@ export function useToast() {
   return useContext(ToastContext);
 }
 
-/** Copies a value, fires success haptics and confirms with a toast. */
+// Module-level so a later copy replaces the pending clear of an earlier one.
+let clipboardClearTimer: ReturnType<typeof setTimeout> | null = null;
+
+/** Schedules wiping the clipboard, but only if it still holds `value`. */
+function scheduleClipboardClear(value: string, seconds: number) {
+  if (clipboardClearTimer) clearTimeout(clipboardClearTimer);
+  if (seconds <= 0) return;
+  clipboardClearTimer = setTimeout(async () => {
+    try {
+      const current = await Clipboard.getStringAsync();
+      if (current === value) await Clipboard.setStringAsync('');
+    } catch {
+      // Ignore — clipboard access can fail when the app is backgrounded.
+    }
+  }, seconds * 1000);
+}
+
+/** Copies a value, fires success haptics, confirms with a toast, auto-clears. */
 export function useCopy() {
   const toast = useToast();
   const t = useT();
@@ -29,7 +47,10 @@ export function useCopy() {
     async (label: string, value: string) => {
       await Clipboard.setStringAsync(value);
       triggerHaptic('success');
-      toast({ message: t('common.copied', { label }), icon: 'copy-outline', tone: 'success' });
+      const clearAfter = useSettings.getState().clipboardClear;
+      scheduleClipboardClear(value, clearAfter);
+      const suffix = clearAfter > 0 ? ` · ${t('clipboard.willClear', { s: clearAfter })}` : '';
+      toast({ message: t('common.copied', { label }) + suffix, icon: 'copy-outline', tone: 'success' });
     },
     [toast, t],
   );
