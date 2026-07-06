@@ -39,6 +39,7 @@ export default function SettingsScreen() {
   const settings = useSettings();
   const lock = useVault((s) => s.lock);
   const erase = useVault((s) => s.erase);
+  const trashCount = useVault((s) => s.trash.length);
 
   const changeMasterPassword = useVault((s) => s.changeMasterPassword);
   const [pwStep, setPwStep] = React.useState<'current' | 'next' | null>(null);
@@ -259,6 +260,17 @@ export default function SettingsScreen() {
           </Text>
           <Ionicons name="chevron-forward" size={17} color={theme.colors.textTertiary} />
         </PressableScale>
+        <View style={[styles.rowDivider, { backgroundColor: theme.colors.border }]} />
+        <PressableScale haptic="light" style={styles.row} onPress={() => router.push('/trash')}>
+          <Ionicons name="trash-outline" size={18} color={theme.colors.accent} />
+          <Text style={[typo.body, { color: theme.colors.text, flex: 1, marginLeft: spacing.sm }]}>
+            {t('trash.title')}
+          </Text>
+          {trashCount > 0 && (
+            <Text style={[typo.caption, { color: theme.colors.textTertiary, marginRight: 4 }]}>{trashCount}</Text>
+          )}
+          <Ionicons name="chevron-forward" size={17} color={theme.colors.textTertiary} />
+        </PressableScale>
       </GlassCard>
 
       <Text style={[typo.micro, styles.sectionLabel, { color: theme.colors.textTertiary }]}>
@@ -322,6 +334,10 @@ const styles = StyleSheet.create({
   row: {
     flexDirection: 'row',
     alignItems: 'center',
+  },
+  rowDivider: {
+    height: StyleSheet.hairlineWidth,
+    marginVertical: spacing.sm,
   },
   iconRow: {
     flexDirection: 'row',

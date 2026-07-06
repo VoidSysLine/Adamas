@@ -79,7 +79,7 @@ export default function EntryDetail() {
         onPress: () => {
           removeEntry(entry.id);
           triggerHaptic('success');
-          toast({ message: t('toast.deleted'), icon: 'trash-outline', tone: 'danger' });
+          toast({ message: t('trash.movedToTrash'), icon: 'trash-outline', tone: 'default' });
           router.back();
         },
       },

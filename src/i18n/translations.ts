@@ -287,6 +287,17 @@ export const de = {
     title: 'Passwort-Verlauf',
     changedOn: 'Geändert am {date}',
   },
+  trash: {
+    title: 'Papierkorb',
+    empty: 'Papierkorb ist leer',
+    retention: 'Gelöschte Einträge werden nach {days} Tagen endgültig entfernt.',
+    movedToTrash: 'In den Papierkorb verschoben',
+    deletedOn: 'Gelöscht am {date}',
+    restored: 'Eintrag wiederhergestellt',
+    deleteForever: 'Endgültig löschen?',
+    emptyTrash: 'Papierkorb leeren',
+    emptyConfirm: 'Alle Einträge im Papierkorb werden endgültig entfernt.',
+  },
   sort: {
     az: 'A–Z',
     updated: 'Zuletzt geändert',
@@ -761,6 +772,17 @@ export const en: Translations = {
   history: {
     title: 'Password history',
     changedOn: 'Changed {date}',
+  },
+  trash: {
+    title: 'Trash',
+    empty: 'Trash is empty',
+    retention: 'Deleted entries are permanently removed after {days} days.',
+    movedToTrash: 'Moved to trash',
+    deletedOn: 'Deleted {date}',
+    restored: 'Entry restored',
+    deleteForever: 'Delete permanently?',
+    emptyTrash: 'Empty trash',
+    emptyConfirm: 'All entries in the trash will be permanently removed.',
   },
   sort: {
     az: 'A–Z',

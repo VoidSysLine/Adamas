@@ -254,6 +254,8 @@ interface VaultEntryBase {
   avatarId?: string;
   /** Previous passwords, newest first — captured when the password changes. */
   passwordHistory?: { value: string; changedAt: number }[];
+  /** Set when the entry is in the trash (soft-deleted). */
+  deletedAt?: number;
   /** Unix ms timestamps. */
   createdAt: number;
   updatedAt: number;
@@ -272,4 +274,6 @@ export type VaultEntry = { [K in EntryKind]: VaultEntryOf<K> }[EntryKind];
 export interface VaultDocument {
   version: 1;
   entries: VaultEntry[];
+  /** Soft-deleted entries awaiting restore or auto-purge. */
+  trash?: VaultEntry[];
 }

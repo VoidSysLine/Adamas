@@ -16,9 +16,14 @@ import type {
 
 export type VaultStatus = 'loading' | 'none' | 'locked' | 'unlocked';
 
+/** Days a soft-deleted entry stays in the trash before auto-purge. */
+export const TRASH_RETENTION_DAYS = 30;
+
 interface VaultState {
   status: VaultStatus;
   entries: VaultEntry[];
+  /** Soft-deleted entries awaiting restore or auto-purge. */
+  trash: VaultEntry[];
   /** In-memory only; wiped on lock. */
   vaultKey: string | null;
 
@@ -40,7 +45,14 @@ interface VaultState {
     id: string,
     patch: { title?: string; notes?: string; data?: EntryDataMap[K]; customFields?: CustomField[] },
   ) => void;
+  /** Soft-deletes: moves the entry to the trash. */
   removeEntry: (id: string) => void;
+  /** Restores a trashed entry back into the vault. */
+  restoreEntry: (id: string) => void;
+  /** Permanently deletes a trashed entry (and its attachment files). */
+  purgeEntry: (id: string) => void;
+  /** Empties the whole trash permanently. */
+  emptyTrash: () => void;
   toggleFavorite: (id: string) => void;
   /** Duplicates an entry's fields (not its attachments); returns the new id. */
   duplicateEntry: (id: string, copySuffix: string) => string | null;
@@ -80,16 +92,32 @@ function passwordKeyOf(kind: EntryKind): string | undefined {
 const MAX_PASSWORD_HISTORY = 15;
 
 function persist(get: () => VaultState) {
-  const { entries, vaultKey } = get();
+  const { entries, trash, vaultKey } = get();
   if (!vaultKey) return;
-  service.saveVault({ version: 1, entries }, vaultKey).catch((err) => {
+  service.saveVault({ version: 1, entries, trash }, vaultKey).catch((err) => {
     console.error('[adamas] vault persist failed', err);
   });
+}
+
+/** Drops trashed entries past the retention window and wipes their files. */
+function pruneTrash(trash: VaultEntry[]): VaultEntry[] {
+  const cutoff = Date.now() - TRASH_RETENTION_DAYS * 24 * 60 * 60 * 1000;
+  const kept: VaultEntry[] = [];
+  for (const entry of trash) {
+    if ((entry.deletedAt ?? 0) < cutoff) {
+      for (const meta of entry.attachments ?? []) attachments.deleteAttachment(meta.id).catch(() => {});
+      if (entry.avatarId) attachments.deleteAttachment(entry.avatarId).catch(() => {});
+    } else {
+      kept.push(entry);
+    }
+  }
+  return kept;
 }
 
 export const useVault = create<VaultState>()((set, get) => ({
   status: 'loading',
   entries: [],
+  trash: [],
   vaultKey: null,
 
   initialize: async () => {
@@ -98,32 +126,34 @@ export const useVault = create<VaultState>()((set, get) => ({
 
   createVault: async (masterPassword) => {
     const { vaultKey, doc } = await service.createVault(masterPassword);
-    set({ status: 'unlocked', vaultKey, entries: doc.entries });
+    set({ status: 'unlocked', vaultKey, entries: doc.entries, trash: doc.trash ?? [] });
   },
 
   unlockWithPassword: async (masterPassword) => {
     const result = await service.unlockWithPassword(masterPassword);
     if (!result) return false;
-    set({ status: 'unlocked', vaultKey: result.vaultKey, entries: result.doc.entries });
+    set({ status: 'unlocked', vaultKey: result.vaultKey, entries: result.doc.entries, trash: pruneTrash(result.doc.trash ?? []) });
+    persist(get);
     return true;
   },
 
   unlockWithBiometrics: async (promptMessage) => {
     const result = await service.unlockWithBiometrics(promptMessage);
     if (!result) return false;
-    set({ status: 'unlocked', vaultKey: result.vaultKey, entries: result.doc.entries });
+    set({ status: 'unlocked', vaultKey: result.vaultKey, entries: result.doc.entries, trash: pruneTrash(result.doc.trash ?? []) });
+    persist(get);
     return true;
   },
 
   lock: () => {
     if (get().status !== 'unlocked') return;
-    set({ status: 'locked', vaultKey: null, entries: [] });
+    set({ status: 'locked', vaultKey: null, entries: [], trash: [] });
   },
 
   erase: async () => {
     await attachments.deleteAllAttachments().catch(() => {});
     await service.eraseVault();
-    set({ status: 'none', vaultKey: null, entries: [] });
+    set({ status: 'none', vaultKey: null, entries: [], trash: [] });
   },
 
   addEntry: (kind, title, data, notes, customFields) => {
@@ -183,12 +213,41 @@ export const useVault = create<VaultState>()((set, get) => ({
 
   removeEntry: (id) => {
     const entry = get().entries.find((e) => e.id === id);
-    // Best-effort cleanup of encrypted attachment + avatar files.
-    for (const meta of entry?.attachments ?? []) {
-      attachments.deleteAttachment(meta.id).catch(() => {});
-    }
+    if (!entry) return;
+    // Soft delete: move to trash (attachment files are kept until purge).
+    const trashed = { ...entry, deletedAt: Date.now() } as VaultEntry;
+    set({
+      entries: get().entries.filter((e) => e.id !== id),
+      trash: [trashed, ...get().trash],
+    });
+    persist(get);
+  },
+
+  restoreEntry: (id) => {
+    const entry = get().trash.find((e) => e.id === id);
+    if (!entry) return;
+    const { deletedAt, ...restored } = entry;
+    set({
+      trash: get().trash.filter((e) => e.id !== id),
+      entries: [{ ...restored, updatedAt: Date.now() } as VaultEntry, ...get().entries],
+    });
+    persist(get);
+  },
+
+  purgeEntry: (id) => {
+    const entry = get().trash.find((e) => e.id === id);
+    for (const meta of entry?.attachments ?? []) attachments.deleteAttachment(meta.id).catch(() => {});
     if (entry?.avatarId) attachments.deleteAttachment(entry.avatarId).catch(() => {});
-    set({ entries: get().entries.filter((e) => e.id !== id) });
+    set({ trash: get().trash.filter((e) => e.id !== id) });
+    persist(get);
+  },
+
+  emptyTrash: () => {
+    for (const entry of get().trash) {
+      for (const meta of entry.attachments ?? []) attachments.deleteAttachment(meta.id).catch(() => {});
+      if (entry.avatarId) attachments.deleteAttachment(entry.avatarId).catch(() => {});
+    }
+    set({ trash: [] });
     persist(get);
   },
 
