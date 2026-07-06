@@ -95,8 +95,19 @@ export async function changeMasterPassword(vaultKey: string, newPassword: string
   await SecureStore.setItemAsync(META_KEY, JSON.stringify(updated));
 }
 
+/**
+ * True when the device can authenticate the user — Face ID / Touch ID *or* a
+ * device passcode. We check the enrolled security *level* rather than
+ * `isEnrolledAsync()` (which is biometrics-only), so a phone with only a
+ * passcode still offers the unlock, matching `authenticateAsync`'s built-in
+ * device-passcode fallback.
+ */
 export async function biometricsAvailable(): Promise<boolean> {
-  return (await LocalAuthentication.hasHardwareAsync()) && (await LocalAuthentication.isEnrolledAsync());
+  try {
+    return (await LocalAuthentication.getEnrolledLevelAsync()) !== LocalAuthentication.SecurityLevel.NONE;
+  } catch {
+    return false;
+  }
 }
 
 /** Resolves to null when biometric auth fails or is unavailable. */
