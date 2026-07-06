@@ -6,9 +6,10 @@ import { FlatList, ScrollView, StyleSheet, Text, TextInput, View } from 'react-n
 import Animated, { FadeIn } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { EntryListItem } from '@/components/vault/EntryListItem';
-import { PressableScale } from '@/components/ui/PressableScale';
+import { PressableScale, triggerHaptic } from '@/components/ui/PressableScale';
 import { CATEGORY_ORDER, categoryOf } from '@/constants/schema';
 import { useT } from '@/i18n';
+import { useSettings, type SortMode } from '@/store/settingsStore';
 import { useVault } from '@/store/vaultStore';
 import { fonts, radius, spacing, type as typo, useTheme } from '@/theme';
 import type { Category, VaultEntry } from '@/types/vault';
@@ -34,12 +35,19 @@ export default function VaultScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const entries = useVault((s) => s.entries);
+  const sortMode = useSettings((s) => s.sortMode);
+  const setSetting = useSettings((s) => s.set);
 
   const [query, setQuery] = useState('');
   const [filter, setFilter] = useState<Filter>('all');
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
+    const compare = (a: VaultEntry, b: VaultEntry) => {
+      if (sortMode === 'updated') return b.updatedAt - a.updatedAt;
+      if (sortMode === 'created') return b.createdAt - a.createdAt;
+      return a.title.localeCompare(b.title, undefined, { sensitivity: 'base', numeric: true });
+    };
     return entries
       .filter((entry) => {
         if (filter === 'favorites') return entry.favorite;
@@ -47,13 +55,16 @@ export default function VaultScreen() {
         return true;
       })
       .filter((entry) => !q || matchesQuery(entry, q))
-      // Favorites pinned on top, then alphabetically A–Z (umlaut-aware).
-      .sort(
-        (a, b) =>
-          Number(b.favorite) - Number(a.favorite) ||
-          a.title.localeCompare(b.title, undefined, { sensitivity: 'base', numeric: true }),
-      );
-  }, [entries, filter, query]);
+      // Favorites stay pinned on top, then by the chosen sort mode.
+      .sort((a, b) => Number(b.favorite) - Number(a.favorite) || compare(a, b));
+  }, [entries, filter, query, sortMode]);
+
+  const cycleSort = () => {
+    const order: SortMode[] = ['az', 'updated', 'created'];
+    const next = order[(order.indexOf(sortMode) + 1) % order.length];
+    triggerHaptic('selection');
+    setSetting('sortMode', next);
+  };
 
   const filters: { value: Filter; label: string }[] = [
     { value: 'all', label: t('common.all') },
@@ -71,16 +82,26 @@ export default function VaultScreen() {
               {entries.length === 1 ? t('vault.item') : t('vault.items', { count: entries.length })}
             </Text>
           </View>
-          <PressableScale haptic="medium" onPress={() => router.push('/new')}>
-            <LinearGradient
-              colors={theme.colors.heroGradient}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-              style={styles.fab}
+          <View style={styles.headerActions}>
+            <PressableScale
+              haptic="none"
+              onPress={cycleSort}
+              style={[styles.sortButton, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}
             >
-              <Ionicons name="add" size={26} color={theme.colors.onAccent} />
-            </LinearGradient>
-          </PressableScale>
+              <Ionicons name="swap-vertical" size={15} color={theme.colors.textSecondary} />
+              <Text style={[typo.caption, { color: theme.colors.textSecondary }]}>{t(`sort.${sortMode}`)}</Text>
+            </PressableScale>
+            <PressableScale haptic="medium" onPress={() => router.push('/new')}>
+              <LinearGradient
+                colors={theme.colors.heroGradient}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={styles.fab}
+              >
+                <Ionicons name="add" size={26} color={theme.colors.onAccent} />
+              </LinearGradient>
+            </PressableScale>
+          </View>
         </View>
 
         <View style={[styles.search, { backgroundColor: theme.colors.surfaceAlt, borderColor: theme.colors.border }]}>
@@ -164,6 +185,20 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+  },
+  headerActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+  },
+  sortButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: spacing.md,
+    paddingVertical: 8,
+    borderRadius: radius.full,
+    borderWidth: StyleSheet.hairlineWidth,
   },
   fab: {
     width: 48,

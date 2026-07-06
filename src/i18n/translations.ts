@@ -280,6 +280,11 @@ export const de = {
   clipboard: {
     willClear: 'wird in {s}s geleert',
   },
+  sort: {
+    az: 'A–Z',
+    updated: 'Zuletzt geändert',
+    created: 'Neueste',
+  },
   avatar: {
     title: 'Profilbild',
     camera: 'Foto aufnehmen',
@@ -742,6 +747,11 @@ export const en: Translations = {
   },
   clipboard: {
     willClear: 'clears in {s}s',
+  },
+  sort: {
+    az: 'A–Z',
+    updated: 'Recent',
+    created: 'Newest',
   },
   avatar: {
     title: 'Profile photo',
