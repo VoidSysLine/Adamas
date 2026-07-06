@@ -5,10 +5,57 @@ import React, { useEffect, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { kindGradient, kindIcon } from '@/constants/schema';
 import { loadAttachment } from '@/lib/attachments';
+import { bankDomain, cardNetwork, CARD_MARKS, cryptoMark, type BrandMark } from '@/lib/brandIcons';
 import { extractDomain, faviconSources, monogram } from '@/lib/favicon';
 import { useVault } from '@/store/vaultStore';
 import { radius } from '@/theme';
 import type { VaultEntry } from '@/types/vault';
+
+/** Flat colored tile with a currency symbol / short word (card & crypto marks). */
+function BrandTile({ mark, size }: { mark: BrandMark; size: number }) {
+  return (
+    <View
+      style={[
+        styles.brandTile,
+        { width: size, height: size, borderRadius: radius.md, backgroundColor: mark.color },
+      ]}
+    >
+      <Text
+        style={{
+          color: mark.textColor,
+          fontSize: mark.isWord ? size * 0.3 : size * 0.5,
+          fontWeight: '800',
+          letterSpacing: mark.isWord ? 0.5 : 0,
+        }}
+      >
+        {mark.label}
+      </Text>
+    </View>
+  );
+}
+
+/** The Mastercard interlocking-circles mark. */
+function MastercardTile({ size }: { size: number }) {
+  const circle = size * 0.42;
+  const overlap = circle * 0.32;
+  return (
+    <View style={[styles.brandTile, { width: size, height: size, borderRadius: radius.md, backgroundColor: '#1A1A1A' }]}>
+      <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+        <View style={{ width: circle, height: circle, borderRadius: circle / 2, backgroundColor: '#EB001B' }} />
+        <View
+          style={{
+            width: circle,
+            height: circle,
+            borderRadius: circle / 2,
+            backgroundColor: '#F79E1B',
+            marginLeft: -overlap,
+            opacity: 0.92,
+          }}
+        />
+      </View>
+    </View>
+  );
+}
 
 interface Props {
   entry: VaultEntry;
@@ -44,7 +91,13 @@ export function FaviconBadge({ entry, size = 44 }: Props) {
     };
   }, [entry.avatarId, vaultKey]);
 
-  const domain = entry.kind === 'login' ? extractDomain(entry.data.url) : null;
+  // Favicon domain: login URLs, plus bank names resolved to their domain.
+  const domain =
+    entry.kind === 'login'
+      ? extractDomain(entry.data.url)
+      : entry.kind === 'bankAccount'
+        ? bankDomain(entry.data.bankName)
+        : null;
   const sources = domain ? faviconSources(domain) : [];
   const showFavicon = domain !== null && sourceIndex < sources.length;
   const gradient = kindGradient(entry.kind);
@@ -80,6 +133,19 @@ export function FaviconBadge({ entry, size = 44 }: Props) {
     );
   }
 
+  // Credit card: brand tile detected from the card number prefix.
+  if (entry.kind === 'creditCard') {
+    const network = cardNetwork(entry.data.number);
+    if (network === 'mastercard') return <MastercardTile size={size} />;
+    if (network) return <BrandTile mark={CARD_MARKS[network]} size={size} />;
+  }
+
+  // Crypto wallet: currency symbol in the coin's brand color.
+  if (entry.kind === 'crypto') {
+    const mark = cryptoMark(entry.data.blockchain);
+    if (mark) return <BrandTile mark={mark} size={size} />;
+  }
+
   return (
     <LinearGradient
       colors={[...gradient]}
@@ -99,6 +165,10 @@ export function FaviconBadge({ entry, size = 44 }: Props) {
 const styles = StyleSheet.create({
   shell: {
     backgroundColor: 'rgba(255,255,255,0.92)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  brandTile: {
     alignItems: 'center',
     justifyContent: 'center',
   },
