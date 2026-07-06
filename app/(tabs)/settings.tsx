@@ -1,5 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useRouter } from 'expo-router';
 import React from 'react';
 import { Alert, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -25,6 +26,7 @@ export default function SettingsScreen() {
   const theme = useTheme();
   const t = useT();
   const insets = useSafeAreaInsets();
+  const router = useRouter();
   const toast = useToast();
   const settings = useSettings();
   const lock = useVault((s) => s.lock);
@@ -161,6 +163,19 @@ export default function SettingsScreen() {
         >
           <Ionicons name="lock-closed-outline" size={17} color={theme.colors.accent} />
           <Text style={[typo.caption, { color: theme.colors.accent }]}>{t('settings.lockNow')}</Text>
+        </PressableScale>
+      </GlassCard>
+
+      <Text style={[typo.micro, styles.sectionLabel, { color: theme.colors.textTertiary }]}>
+        {t('backup.title')}
+      </Text>
+      <GlassCard style={styles.card}>
+        <PressableScale haptic="light" style={styles.row} onPress={() => router.push('/backup')}>
+          <Ionicons name="archive-outline" size={18} color={theme.colors.accent} />
+          <Text style={[typo.body, { color: theme.colors.text, flex: 1, marginLeft: spacing.sm }]}>
+            {t('backup.manage')}
+          </Text>
+          <Ionicons name="chevron-forward" size={17} color={theme.colors.textTertiary} />
         </PressableScale>
       </GlassCard>
 

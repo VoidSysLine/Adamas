@@ -3,6 +3,7 @@ import { create } from 'zustand';
 import * as service from '@/crypto/vaultService';
 import { fieldsOf } from '@/constants/schema';
 import * as attachments from '@/lib/attachments';
+import { createBackup, type BackupPayload } from '@/lib/backup';
 import type { ImportedLogin } from '@/lib/importers/bitwarden';
 import type {
   AttachmentMeta,
@@ -54,6 +55,10 @@ interface VaultState {
   /** Sets/replaces the entry's avatar image (e.g. identity profile photo). */
   setAvatar: (entryId: string, base64: string) => Promise<void>;
   removeAvatar: (entryId: string) => Promise<void>;
+  /** Builds a password-encrypted backup string of the whole vault. */
+  exportBackup: (password: string) => Promise<string | null>;
+  /** Merges a decrypted backup into the vault; returns imported entry count. */
+  importBackup: (payload: BackupPayload) => Promise<number>;
 }
 
 /** Field keys whose change should refresh `secretUpdatedAt` (audit input). */
@@ -283,5 +288,57 @@ export const useVault = create<VaultState>()((set, get) => ({
       entries: get().entries.map((e) => (e.id === entryId ? { ...e, avatarId: undefined, updatedAt: Date.now() } : e)),
     });
     persist(get);
+  },
+
+  exportBackup: async (password) => {
+    const { vaultKey, entries } = get();
+    if (!vaultKey) return null;
+    // Decrypt every attachment/avatar so the backup is fully self-contained.
+    const payloadAttachments: Record<string, string> = {};
+    for (const entry of entries) {
+      const ids = [...(entry.attachments?.map((a) => a.id) ?? []), ...(entry.avatarId ? [entry.avatarId] : [])];
+      for (const id of ids) {
+        try {
+          payloadAttachments[id] = await attachments.loadAttachment(id, vaultKey);
+        } catch {
+          // Skip a missing/corrupt attachment rather than failing the whole backup.
+        }
+      }
+    }
+    return createBackup(password, { entries, attachments: payloadAttachments }, Date.now());
+  },
+
+  importBackup: async (payload) => {
+    const { vaultKey } = get();
+    if (!vaultKey) return 0;
+    const now = Date.now();
+
+    // Re-encrypt attachment payloads under the current vault key with fresh ids.
+    const idMap: Record<string, string> = {};
+    for (const [oldId, base64] of Object.entries(payload.attachments)) {
+      if (base64.length > attachments.MAX_BASE64_LENGTH) continue;
+      const newId = Crypto.randomUUID();
+      try {
+        await attachments.saveAttachment(newId, base64, vaultKey);
+        idMap[oldId] = newId;
+      } catch {
+        // Ignore a single failed attachment write.
+      }
+    }
+
+    const imported: VaultEntry[] = payload.entries.map((entry) => ({
+      ...entry,
+      id: Crypto.randomUUID(),
+      attachments: entry.attachments
+        ?.filter((a) => idMap[a.id])
+        .map((a) => ({ ...a, id: idMap[a.id] })),
+      avatarId: entry.avatarId ? idMap[entry.avatarId] : undefined,
+      createdAt: entry.createdAt ?? now,
+      updatedAt: now,
+    }));
+
+    set({ entries: [...imported, ...get().entries] });
+    persist(get);
+    return imported.length;
   },
 }));
