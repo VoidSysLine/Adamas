@@ -75,6 +75,26 @@ export async function unlockWithPassword(
   return { vaultKey, doc: await loadVault(vaultKey) };
 }
 
+/**
+ * Re-wraps the (unchanged) vault key under a new master password. Because the
+ * vault key itself never changes, the encrypted vault blob and the biometric
+ * key entry stay valid — only the meta's salt and wrapped key are rewritten.
+ */
+export async function changeMasterPassword(vaultKey: string, newPassword: string): Promise<void> {
+  const rawMeta = await SecureStore.getItemAsync(META_KEY);
+  if (!rawMeta) throw new Error('No vault to re-key');
+  const meta: VaultMeta = JSON.parse(rawMeta);
+  const saltHex = randomHex(16);
+  const wrappingKey = await deriveKeyHex(newPassword, saltHex, KDF_ITERATIONS);
+  const updated: VaultMeta = {
+    ...meta,
+    saltHex,
+    iterations: KDF_ITERATIONS,
+    wrappedKey: encrypt(vaultKey, wrappingKey),
+  };
+  await SecureStore.setItemAsync(META_KEY, JSON.stringify(updated));
+}
+
 export async function biometricsAvailable(): Promise<boolean> {
   return (await LocalAuthentication.hasHardwareAsync()) && (await LocalAuthentication.isEnrolledAsync());
 }

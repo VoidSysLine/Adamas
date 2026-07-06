@@ -55,6 +55,8 @@ interface VaultState {
   /** Sets/replaces the entry's avatar image (e.g. identity profile photo). */
   setAvatar: (entryId: string, base64: string) => Promise<void>;
   removeAvatar: (entryId: string) => Promise<void>;
+  /** Re-keys the vault to a new master password after verifying the current one. */
+  changeMasterPassword: (current: string, next: string) => Promise<'ok' | 'wrongCurrent' | 'error'>;
   /** Builds a password-encrypted backup string of the whole vault. */
   exportBackup: (password: string) => Promise<string | null>;
   /** Merges a decrypted backup into the vault; returns imported entry count. */
@@ -288,6 +290,18 @@ export const useVault = create<VaultState>()((set, get) => ({
       entries: get().entries.map((e) => (e.id === entryId ? { ...e, avatarId: undefined, updatedAt: Date.now() } : e)),
     });
     persist(get);
+  },
+
+  changeMasterPassword: async (current, next) => {
+    // Verify the current password by unlocking a throwaway copy of the vault.
+    const verified = await service.unlockWithPassword(current);
+    if (!verified) return 'wrongCurrent';
+    try {
+      await service.changeMasterPassword(verified.vaultKey, next);
+      return 'ok';
+    } catch {
+      return 'error';
+    }
   },
 
   exportBackup: async (password) => {

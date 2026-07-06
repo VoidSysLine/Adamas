@@ -5,6 +5,7 @@ import React from 'react';
 import { Alert, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { GlassCard } from '@/components/ui/GlassCard';
+import { PasswordPromptModal } from '@/components/ui/PasswordPromptModal';
 import { PressableScale, triggerHaptic } from '@/components/ui/PressableScale';
 import { PrismGem } from '@/components/ui/PrismGem';
 import { SegmentedControl } from '@/components/ui/SegmentedControl';
@@ -39,8 +40,29 @@ export default function SettingsScreen() {
   const lock = useVault((s) => s.lock);
   const erase = useVault((s) => s.erase);
 
+  const changeMasterPassword = useVault((s) => s.changeMasterPassword);
+  const [pwStep, setPwStep] = React.useState<'current' | 'next' | null>(null);
+  const currentPw = React.useRef('');
+
   const autoLockLabel = (value: AutoLockPref) =>
     value === 0 ? t('settings.autoLockNow') : value === -1 ? t('settings.autoLockNever') : t('settings.autoLockMinutes', { min: value });
+
+  const onChangePassword = async (next: string) => {
+    setPwStep(null);
+    const result = await changeMasterPassword(currentPw.current, next);
+    currentPw.current = '';
+    if (result === 'ok') {
+      triggerHaptic('success');
+      toast({ message: t('settings.passwordChanged'), icon: 'checkmark-circle-outline', tone: 'success' });
+    } else {
+      triggerHaptic('error');
+      toast({
+        message: t(result === 'wrongCurrent' ? 'settings.wrongCurrent' : 'backup.exportError'),
+        icon: 'alert-circle-outline',
+        tone: 'danger',
+      });
+    }
+  };
 
   const clipboardLabel = (value: ClipboardClearPref) =>
     value === 0 ? t('settings.autoLockNever') : t('settings.clipboardSeconds', { s: value });
@@ -54,6 +76,7 @@ export default function SettingsScreen() {
   };
 
   return (
+    <>
     <ScrollView
       style={{ backgroundColor: theme.colors.background }}
       contentContainerStyle={[
@@ -205,6 +228,14 @@ export default function SettingsScreen() {
           />
         </View>
         <PressableScale
+          haptic="light"
+          style={[styles.lockButton, { borderColor: theme.colors.border }]}
+          onPress={() => setPwStep('current')}
+        >
+          <Ionicons name="key-outline" size={17} color={theme.colors.accent} />
+          <Text style={[typo.caption, { color: theme.colors.accent }]}>{t('settings.changePassword')}</Text>
+        </PressableScale>
+        <PressableScale
           haptic="medium"
           style={[styles.lockButton, { borderColor: theme.colors.border }]}
           onPress={() => {
@@ -246,6 +277,32 @@ export default function SettingsScreen() {
         {t('settings.about')}
       </Text>
     </ScrollView>
+
+    <PasswordPromptModal
+      visible={pwStep === 'current'}
+      title={t('settings.changePassword')}
+      hint={t('settings.currentPwHint')}
+      submitLabel={t('common.done')}
+      onCancel={() => setPwStep(null)}
+      onSubmit={(pw) => {
+        currentPw.current = pw;
+        setPwStep('next');
+      }}
+    />
+    <PasswordPromptModal
+      visible={pwStep === 'next'}
+      title={t('settings.newPassword')}
+      hint={t('onboarding.masterHint')}
+      submitLabel={t('common.save')}
+      confirm
+      minLength={8}
+      onCancel={() => {
+        setPwStep(null);
+        currentPw.current = '';
+      }}
+      onSubmit={(pw) => void onChangePassword(pw)}
+    />
+    </>
   );
 }
 
