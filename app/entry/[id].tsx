@@ -32,6 +32,7 @@ export default function EntryDetail() {
   const entry = useVault((s) => s.entries.find((e) => e.id === id));
   const toggleFavorite = useVault((s) => s.toggleFavorite);
   const removeEntry = useVault((s) => s.removeEntry);
+  const duplicateEntry = useVault((s) => s.duplicateEntry);
   const language = resolveLanguage(useSettings((s) => s.language));
 
   if (!entry) return <View style={{ flex: 1, backgroundColor: theme.colors.background }} />;
@@ -58,6 +59,13 @@ export default function EntryDetail() {
       return { display: raw, copyValue: MASKS[field.mask].strip(raw) };
     }
     return { display: raw };
+  };
+
+  const onDuplicate = () => {
+    const newId = duplicateEntry(entry.id, t('detail.copySuffix'));
+    triggerHaptic('success');
+    toast({ message: t('detail.duplicated'), icon: 'copy-outline', tone: 'success' });
+    if (newId) router.replace(`/entry/${newId}`);
   };
 
   const onDelete = () => {
@@ -205,10 +213,16 @@ export default function EntryDetail() {
           <Text style={[typo.caption, { color: theme.colors.textTertiary }]}>
             {t('detail.updated', { date: formatTimestamp(entry.updatedAt, language) })}
           </Text>
-          <PressableScale haptic="none" style={styles.deleteButton} onPress={onDelete}>
-            <Ionicons name="trash-outline" size={17} color={theme.colors.danger} />
-            <Text style={[typo.caption, { color: theme.colors.danger }]}>{t('common.delete')}</Text>
-          </PressableScale>
+          <View style={styles.footerActions}>
+            <PressableScale haptic="light" style={styles.deleteButton} onPress={onDuplicate}>
+              <Ionicons name="copy-outline" size={17} color={theme.colors.accent} />
+              <Text style={[typo.caption, { color: theme.colors.accent }]}>{t('detail.duplicate')}</Text>
+            </PressableScale>
+            <PressableScale haptic="none" style={styles.deleteButton} onPress={onDelete}>
+              <Ionicons name="trash-outline" size={17} color={theme.colors.danger} />
+              <Text style={[typo.caption, { color: theme.colors.danger }]}>{t('common.delete')}</Text>
+            </PressableScale>
+          </View>
         </Animated.View>
       </ScrollView>
     </View>
@@ -256,6 +270,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: spacing.md,
     marginTop: spacing.lg,
+  },
+  footerActions: {
+    flexDirection: 'row',
+    gap: spacing.sm,
   },
   deleteButton: {
     flexDirection: 'row',

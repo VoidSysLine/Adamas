@@ -42,6 +42,8 @@ interface VaultState {
   ) => void;
   removeEntry: (id: string) => void;
   toggleFavorite: (id: string) => void;
+  /** Duplicates an entry's fields (not its attachments); returns the new id. */
+  duplicateEntry: (id: string, copySuffix: string) => string | null;
   /** Batch import (e.g. Bitwarden): one persist, original timestamps kept. */
   importLogins: (logins: ImportedLogin[]) => number;
   /** TOTP import: fills empty totpSeed fields and creates logins for the rest. */
@@ -171,6 +173,27 @@ export const useVault = create<VaultState>()((set, get) => ({
     if (entry?.avatarId) attachments.deleteAttachment(entry.avatarId).catch(() => {});
     set({ entries: get().entries.filter((e) => e.id !== id) });
     persist(get);
+  },
+
+  duplicateEntry: (id, copySuffix) => {
+    const source = get().entries.find((e) => e.id === id);
+    if (!source) return null;
+    const now = Date.now();
+    // Copy data + custom fields; attachments/avatar stay with the original.
+    const copy = {
+      ...source,
+      id: Crypto.randomUUID(),
+      title: `${source.title} ${copySuffix}`.trim(),
+      favorite: false,
+      attachments: undefined,
+      avatarId: undefined,
+      createdAt: now,
+      updatedAt: now,
+      secretUpdatedAt: now,
+    } as VaultEntry;
+    set({ entries: [copy, ...get().entries] });
+    persist(get);
+    return copy.id;
   },
 
   toggleFavorite: (id) => {
