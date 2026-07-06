@@ -11,6 +11,7 @@ import { AttachmentsCard } from '@/components/vault/AttachmentsCard';
 import { AvatarPicker } from '@/components/vault/AvatarPicker';
 import { CopyRow } from '@/components/vault/CopyRow';
 import { FaviconBadge } from '@/components/vault/FaviconBadge';
+import { PasswordHistoryCard } from '@/components/vault/PasswordHistoryCard';
 import { TotpRing } from '@/components/vault/TotpRing';
 import { WifiQrCard } from '@/components/vault/WifiQrCard';
 import { fieldsOf, kindAllowsAttachments, type FieldDef } from '@/constants/schema';
@@ -198,6 +199,12 @@ export default function EntryDetail() {
         {kindAllowsAttachments(entry.kind) && (
           <Animated.View entering={FadeInDown.delay(180).springify().damping(18)}>
             <AttachmentsCard entry={entry} />
+          </Animated.View>
+        )}
+
+        {entry.passwordHistory && entry.passwordHistory.length > 0 && (
+          <Animated.View entering={FadeInDown.delay(190).springify().damping(18)}>
+            <PasswordHistoryCard history={entry.passwordHistory} />
           </Animated.View>
         )}
 

@@ -283,6 +283,10 @@ export const de = {
   clipboard: {
     willClear: 'wird in {s}s geleert',
   },
+  history: {
+    title: 'Passwort-Verlauf',
+    changedOn: 'Geändert am {date}',
+  },
   sort: {
     az: 'A–Z',
     updated: 'Zuletzt geändert',
@@ -753,6 +757,10 @@ export const en: Translations = {
   },
   clipboard: {
     willClear: 'clears in {s}s',
+  },
+  history: {
+    title: 'Password history',
+    changedOn: 'Changed {date}',
   },
   sort: {
     az: 'A–Z',

@@ -252,6 +252,8 @@ interface VaultEntryBase {
   attachments?: AttachmentMeta[];
   /** Attachment id used as the entry's avatar (identities' profile photo). */
   avatarId?: string;
+  /** Previous passwords, newest first — captured when the password changes. */
+  passwordHistory?: { value: string; changedAt: number }[];
   /** Unix ms timestamps. */
   createdAt: number;
   updatedAt: number;

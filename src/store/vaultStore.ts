@@ -72,6 +72,13 @@ function secretKeys(kind: EntryKind): string[] {
     .map((f) => f.key);
 }
 
+/** The primary password field key for a kind (for history tracking). */
+function passwordKeyOf(kind: EntryKind): string | undefined {
+  return fieldsOf(kind).find((f) => f.type === 'password')?.key;
+}
+
+const MAX_PASSWORD_HISTORY = 15;
+
 function persist(get: () => VaultState) {
   const { entries, vaultKey } = get();
   if (!vaultKey) return;
@@ -156,6 +163,16 @@ export const useVault = create<VaultState>()((set, get) => ({
           if (keys.some((k) => oldData[k] !== newData[k])) {
             next.secretUpdatedAt = now;
           }
+          // Archive the previous password when it actually changes to a new value.
+          const pwKey = passwordKeyOf(entry.kind);
+          const oldPw = pwKey ? oldData[pwKey] : undefined;
+          const newPw = pwKey ? newData[pwKey] : undefined;
+          if (pwKey && oldPw && newPw && oldPw !== newPw) {
+            next.passwordHistory = [
+              { value: oldPw, changedAt: now },
+              ...(entry.passwordHistory ?? []),
+            ].slice(0, MAX_PASSWORD_HISTORY);
+          }
           next.data = patch.data as never;
         }
         return next;
@@ -187,6 +204,7 @@ export const useVault = create<VaultState>()((set, get) => ({
       favorite: false,
       attachments: undefined,
       avatarId: undefined,
+      passwordHistory: undefined,
       createdAt: now,
       updatedAt: now,
       secretUpdatedAt: now,
