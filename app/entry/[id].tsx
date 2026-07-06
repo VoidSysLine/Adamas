@@ -10,6 +10,7 @@ import { useToast } from '@/components/ui/Toast';
 import { AttachmentsCard } from '@/components/vault/AttachmentsCard';
 import { AvatarPicker } from '@/components/vault/AvatarPicker';
 import { CopyRow } from '@/components/vault/CopyRow';
+import { CreditCardVisual } from '@/components/vault/CreditCardVisual';
 import { FaviconBadge } from '@/components/vault/FaviconBadge';
 import { PasswordHistoryCard } from '@/components/vault/PasswordHistoryCard';
 import { TotpRing } from '@/components/vault/TotpRing';
@@ -111,13 +112,20 @@ export default function EntryDetail() {
       </View>
 
       <ScrollView contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 48 }]}>
-        <Animated.View entering={FadeInDown.springify().damping(18)} style={styles.hero}>
-          {entry.kind === 'identity' ? <AvatarPicker entry={entry} /> : <FaviconBadge entry={entry} size={64} />}
-          <Text style={[typo.title, { color: theme.colors.text, textAlign: 'center' }]}>{entry.title}</Text>
-          <View style={[styles.kindChip, { backgroundColor: theme.colors.accentSoft }]}>
-            <Text style={[typo.caption, { color: theme.colors.accent }]}>{t(`kinds.${entry.kind}`)}</Text>
-          </View>
-        </Animated.View>
+        {entry.kind === 'creditCard' ? (
+          <Animated.View entering={FadeInDown.springify().damping(18)} style={styles.cardHero}>
+            <CreditCardVisual data={entry.data} title={entry.title} />
+            <Text style={[typo.title, { color: theme.colors.text, textAlign: 'center' }]}>{entry.title}</Text>
+          </Animated.View>
+        ) : (
+          <Animated.View entering={FadeInDown.springify().damping(18)} style={styles.hero}>
+            {entry.kind === 'identity' ? <AvatarPicker entry={entry} /> : <FaviconBadge entry={entry} size={64} />}
+            <Text style={[typo.title, { color: theme.colors.text, textAlign: 'center' }]}>{entry.title}</Text>
+            <View style={[styles.kindChip, { backgroundColor: theme.colors.accentSoft }]}>
+              <Text style={[typo.caption, { color: theme.colors.accent }]}>{t(`kinds.${entry.kind}`)}</Text>
+            </View>
+          </Animated.View>
+        )}
 
         {entry.kind === 'login' && entry.data.totpSeed && (
           <Animated.View entering={FadeInDown.delay(80).springify().damping(18)}>
@@ -258,6 +266,10 @@ const styles = StyleSheet.create({
   },
   hero: {
     alignItems: 'center',
+    gap: spacing.md,
+    marginVertical: spacing.lg,
+  },
+  cardHero: {
     gap: spacing.md,
     marginVertical: spacing.lg,
   },
