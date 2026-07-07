@@ -31,6 +31,14 @@ function subtitle(entry: VaultEntry): string {
       const short = address && address.length > 14 ? `${address.slice(0, 8)}…${address.slice(-5)}` : address;
       return [entry.data.blockchain, short].filter(Boolean).join(' · ');
     }
+    case 'hardwareWallet':
+      return entry.data.deviceModel ?? '';
+    case 'securityKey':
+      return [entry.data.deviceModel, entry.data.serialNumber].filter(Boolean).join(' · ');
+    case 'vpn':
+      return [entry.data.protocol === 'other' ? undefined : entry.data.protocol, entry.data.host]
+        .filter(Boolean)
+        .join(' · ');
     case 'wifi':
       return entry.data.ssid ?? '';
     case 'sim':

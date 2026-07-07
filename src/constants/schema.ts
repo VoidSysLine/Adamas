@@ -72,6 +72,14 @@ export const TWO_FACTOR_OPTIONS: readonly SelectOption[] = [
   { value: 'unavailable', label: 'twoFactorUnavailable' },
 ];
 
+export const VPN_PROTOCOL_OPTIONS: readonly SelectOption[] = [
+  { value: 'WireGuard', label: 'vpnWireguard' },
+  { value: 'OpenVPN', label: 'vpnOpenvpn' },
+  { value: 'IKEv2', label: 'vpnIkev2' },
+  { value: 'L2TP', label: 'vpnL2tp' },
+  { value: 'other', label: 'vpnOther' },
+];
+
 export const LOCK_TYPE_OPTIONS: readonly SelectOption[] = [
   { value: 'safe', label: 'lockSafe' },
   { value: 'alarm', label: 'lockAlarm' },
@@ -219,6 +227,17 @@ export const KIND_REGISTRY: { [K in EntryKind]: KindMeta<K> } = {
       { key: 'passphrase', label: 'walletPassphrase', type: 'password', secure: true, generator: 'password' },
     ],
   },
+  hardwareWallet: {
+    category: 'finance',
+    icon: 'wallet-outline',
+    fields: [
+      { key: 'deviceModel', label: 'deviceModel', type: 'text', hint: 'hwWalletExample' },
+      { key: 'pin', label: 'pin', type: 'pin', mask: 'digits8', hint: 'accessCodeExample', secure: true, generator: 'pin' },
+      { key: 'seedPhrase', label: 'seedPhrase', type: 'multiline', hint: 'seedPhraseExample', secure: true },
+      { key: 'passphrase', label: 'walletPassphrase', type: 'password', secure: true, generator: 'password' },
+      { key: 'serialNumber', label: 'serialNumber', type: 'code', hint: 'serialExample' },
+    ],
+  },
   wifi: {
     category: 'tech',
     icon: 'wifi-outline',
@@ -250,6 +269,18 @@ export const KIND_REGISTRY: { [K in EntryKind]: KindMeta<K> } = {
       { key: 'privateKey', label: 'privateKey', type: 'multiline', hint: 'privateKeyExample', secure: true },
     ],
   },
+  vpn: {
+    category: 'tech',
+    icon: 'shield-outline',
+    fields: [
+      { key: 'protocol', label: 'vpnProtocol', type: 'select', options: VPN_PROTOCOL_OPTIONS },
+      { key: 'host', label: 'host', type: 'url', hint: 'vpnHostExample' },
+      { key: 'port', label: 'port', type: 'number', mask: 'port', hint: 'vpnPortExample' },
+      { key: 'username', label: 'username', type: 'username', hint: 'serverUserExample' },
+      { key: 'password', label: 'password', type: 'password', secure: true, generator: 'password' },
+      { key: 'privateKey', label: 'vpnKey', type: 'multiline', hint: 'vpnKeyExample', secure: true },
+    ],
+  },
   softwareLicense: {
     category: 'tech',
     icon: 'cube-outline',
@@ -278,6 +309,17 @@ export const KIND_REGISTRY: { [K in EntryKind]: KindMeta<K> } = {
       { key: 'code', label: 'accessCodeValue', type: 'pin', hint: 'accessCodeExample', secure: true, generator: 'pin' },
     ],
   },
+  securityKey: {
+    category: 'tech',
+    icon: 'key-outline',
+    fields: [
+      { key: 'deviceModel', label: 'deviceModel', type: 'text', hint: 'securityKeyExample' },
+      { key: 'serialNumber', label: 'serialNumber', type: 'code', hint: 'serialExample' },
+      { key: 'pin', label: 'fidoPin', type: 'pin', mask: 'digits8', secure: true, generator: 'pin' },
+      { key: 'puk', label: 'puk', type: 'pin', mask: 'digits8', secure: true },
+      { key: 'registeredServices', label: 'registeredServices', type: 'multiline', hint: 'registeredServicesExample' },
+    ],
+  },
   note: {
     category: 'notes',
     icon: 'reader-outline',
@@ -300,11 +342,15 @@ export const CATEGORIES: Record<Category, CategoryMeta> = {
     gradient: ['#FDE68A', '#F59E0B'],
     kinds: ['nationalId', 'driversLicense', 'passport', 'vehicle', 'taxId', 'healthInsurance', 'pension'],
   },
-  finance: { icon: 'card-outline', gradient: ['#6EE7B7', '#10B981'], kinds: ['creditCard', 'bankAccount', 'crypto'] },
+  finance: {
+    icon: 'card-outline',
+    gradient: ['#6EE7B7', '#10B981'],
+    kinds: ['creditCard', 'bankAccount', 'crypto', 'hardwareWallet'],
+  },
   tech: {
     icon: 'hardware-chip-outline',
     gradient: ['#A5B4FC', '#6366F1'],
-    kinds: ['wifi', 'sim', 'server', 'softwareLicense', 'apiKey', 'accessCode'],
+    kinds: ['wifi', 'sim', 'server', 'vpn', 'softwareLicense', 'apiKey', 'accessCode', 'securityKey'],
   },
   notes: { icon: 'reader-outline', gradient: ['#FDA4AF', '#F43F5E'], kinds: ['note'] },
 };

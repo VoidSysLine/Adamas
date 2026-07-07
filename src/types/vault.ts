@@ -24,12 +24,15 @@ export type EntryKind =
   | 'creditCard'
   | 'bankAccount'
   | 'crypto'
+  | 'hardwareWallet'
   | 'wifi'
   | 'sim'
   | 'server'
+  | 'vpn'
   | 'softwareLicense'
   | 'apiKey'
   | 'accessCode'
+  | 'securityKey'
   | 'note';
 
 export type Category = 'logins' | 'identity' | 'documents' | 'finance' | 'tech' | 'notes';
@@ -143,6 +146,41 @@ export interface CryptoData {
   passphrase?: string;
 }
 
+export interface HardwareWalletData {
+  /** e.g. "Ledger Nano X". */
+  deviceModel?: string;
+  /** Device unlock PIN (4–8 digits on Ledger/Trezor). */
+  pin?: string;
+  /** BIP-39 recovery phrase backing the device. */
+  seedPhrase?: string;
+  /** Optional 25th-word passphrase. */
+  passphrase?: string;
+  serialNumber?: string;
+}
+
+export interface SecurityKeyData {
+  /** e.g. "YubiKey 5C NFC". */
+  deviceModel?: string;
+  serialNumber?: string;
+  /** FIDO2/PIV PIN. */
+  pin?: string;
+  /** PIV unblock key. */
+  puk?: string;
+  /** Where the key is registered — vital when replacing a lost key. */
+  registeredServices?: string;
+}
+
+export interface VpnData {
+  /** WireGuard / OpenVPN / IKEv2 … (select). */
+  protocol?: string;
+  host?: string;
+  port?: string;
+  username?: string;
+  password?: string;
+  /** WireGuard private key / IPsec PSK / inline config. */
+  privateKey?: string;
+}
+
 export interface WifiData {
   ssid?: string;
   password?: string;
@@ -203,12 +241,15 @@ export interface EntryDataMap {
   creditCard: CreditCardData;
   bankAccount: BankAccountData;
   crypto: CryptoData;
+  hardwareWallet: HardwareWalletData;
   wifi: WifiData;
   sim: SimData;
   server: ServerData;
+  vpn: VpnData;
   softwareLicense: SoftwareLicenseData;
   apiKey: ApiKeyData;
   accessCode: AccessCodeData;
+  securityKey: SecurityKeyData;
   note: NoteData;
 }
 
