@@ -180,14 +180,18 @@ export default function Unlock() {
             disabled={!password}
             haptic="none"
           />
-          {canBiometric && biometricsEnabled && (
-            <PressableScale haptic="light" style={styles.biometric} onPress={tryBiometric}>
+          {canBiometric && (
+            <PressableScale
+              haptic="light"
+              style={[styles.biometric, { borderColor: theme.colors.border }]}
+              onPress={tryBiometric}
+            >
               <Ionicons
                 name={Platform.OS === 'ios' ? 'scan-outline' : 'finger-print-outline'}
                 size={20}
                 color={theme.colors.accent}
               />
-              <Text style={[typo.caption, { color: theme.colors.accent }]}>{t('unlock.biometric')}</Text>
+              <Text style={[typo.headline, { color: theme.colors.accent }]}>{t('unlock.biometric')}</Text>
             </PressableScale>
           )}
           <PressableScale haptic="light" style={styles.recover} onPress={() => void pickBackup()}>
@@ -237,6 +241,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: spacing.sm,
     paddingVertical: spacing.md,
+    borderRadius: 14,
+    borderWidth: 1,
   },
   recover: {
     flexDirection: 'row',
