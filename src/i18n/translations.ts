@@ -309,6 +309,14 @@ export const de = {
     gallery: 'Aus Galerie wählen',
     remove: 'Profilbild entfernen',
   },
+  recover: {
+    link: 'Aus Backup wiederherstellen',
+    newMasterTitle: 'Neues Master-Passwort',
+    newMasterHint: 'Wähle ein neues Master-Passwort für den wiederhergestellten Tresor.',
+    replaceTitle: 'Tresor ersetzen?',
+    replaceMessage: 'Der bestehende (gesperrte) Tresor wird gelöscht und vollständig durch das Backup ersetzt. Dies kann nicht rückgängig gemacht werden.',
+    replaceConfirm: 'Ersetzen & wiederherstellen',
+  },
   backup: {
     title: 'Backup',
     manage: 'Backup & Wiederherstellung',
@@ -794,6 +802,14 @@ export const en: Translations = {
     camera: 'Take photo',
     gallery: 'Choose from gallery',
     remove: 'Remove profile photo',
+  },
+  recover: {
+    link: 'Restore from backup',
+    newMasterTitle: 'New master password',
+    newMasterHint: 'Choose a new master password for the restored vault.',
+    replaceTitle: 'Replace vault?',
+    replaceMessage: 'The existing (locked) vault will be erased and fully replaced by the backup. This cannot be undone.',
+    replaceConfirm: 'Replace & restore',
   },
   backup: {
     title: 'Backup',

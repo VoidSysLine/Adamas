@@ -1,6 +1,8 @@
 import { Ionicons } from '@expo/vector-icons';
-import React, { useCallback, useEffect, useState } from 'react';
-import { KeyboardAvoidingView, Platform, StyleSheet, Text, View } from 'react-native';
+import * as DocumentPicker from 'expo-document-picker';
+import { File } from 'expo-file-system';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { Alert, KeyboardAvoidingView, Platform, StyleSheet, Text, View } from 'react-native';
 import Animated, {
   FadeInDown,
   useAnimatedStyle,
@@ -12,9 +14,12 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { DiamondLogo } from '@/components/ui/DiamondLogo';
 import { FormField } from '@/components/ui/FormField';
 import { GradientButton } from '@/components/ui/GradientButton';
+import { PasswordPromptModal } from '@/components/ui/PasswordPromptModal';
 import { PressableScale, triggerHaptic } from '@/components/ui/PressableScale';
+import { useToast } from '@/components/ui/Toast';
 import { biometricsAvailable } from '@/crypto/vaultService';
 import { useT } from '@/i18n';
+import { readBackup, type BackupPayload } from '@/lib/backup';
 import { useSettings } from '@/store/settingsStore';
 import { useVault } from '@/store/vaultStore';
 import { spacing, type as typo, useTheme } from '@/theme';
@@ -25,9 +30,14 @@ export default function Unlock() {
   const insets = useSafeAreaInsets();
   const unlockWithPassword = useVault((s) => s.unlockWithPassword);
   const unlockWithBiometrics = useVault((s) => s.unlockWithBiometrics);
+  const recoverFromBackup = useVault((s) => s.recoverFromBackup);
   const biometricsEnabled = useSettings((s) => s.biometricsEnabled);
+  const toast = useToast();
 
   const [password, setPassword] = useState('');
+  const [recoverStep, setRecoverStep] = useState<'backupPw' | 'newPw' | null>(null);
+  const backupFile = useRef<string | null>(null);
+  const backupPayload = useRef<BackupPayload | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(false);
   const [canBiometric, setCanBiometric] = useState(false);
@@ -70,6 +80,71 @@ export default function Unlock() {
   };
 
   const shakeStyle = useAnimatedStyle(() => ({ transform: [{ translateX: shake.value }] }));
+
+  /** Step 1: pick the .adamas backup file. */
+  const pickBackup = async () => {
+    try {
+      const picked = await DocumentPicker.getDocumentAsync({ type: '*/*', copyToCacheDirectory: true });
+      if (picked.canceled || !picked.assets?.[0]) return;
+      backupFile.current = await new File(picked.assets[0].uri).text();
+      setRecoverStep('backupPw');
+    } catch {
+      triggerHaptic('error');
+      toast({ message: t('backup.restoreError'), icon: 'alert-circle-outline', tone: 'danger' });
+    }
+  };
+
+  /** Step 2: decrypt the backup with its password. */
+  const onBackupPassword = async (backupPassword: string) => {
+    setRecoverStep(null);
+    if (!backupFile.current) return;
+    const result = await readBackup(backupPassword, backupFile.current);
+    if (!result.ok) {
+      triggerHaptic('error');
+      toast({
+        message: t(result.reason === 'wrongPassword' ? 'backup.wrongPassword' : 'backup.restoreError'),
+        icon: 'alert-circle-outline',
+        tone: 'danger',
+      });
+      // Wrong password: reopen the prompt so the user can retry directly.
+      if (result.reason === 'wrongPassword') setRecoverStep('backupPw');
+      return;
+    }
+    backupPayload.current = result.payload;
+    setRecoverStep('newPw');
+  };
+
+  /** Step 3: confirm replacing the locked vault, then rebuild it. */
+  const onNewMasterPassword = (newPassword: string) => {
+    setRecoverStep(null);
+    triggerHaptic('warning');
+    Alert.alert(t('recover.replaceTitle'), t('recover.replaceMessage'), [
+      { text: t('common.cancel'), style: 'cancel' },
+      {
+        text: t('recover.replaceConfirm'),
+        style: 'destructive',
+        onPress: () => {
+          void (async () => {
+            const payload = backupPayload.current;
+            if (!payload) return;
+            setBusy(true);
+            try {
+              const count = await recoverFromBackup(payload, newPassword);
+              triggerHaptic('success');
+              toast({ message: t('backup.restored', { count }), icon: 'checkmark-circle-outline', tone: 'success' });
+            } catch {
+              triggerHaptic('error');
+              toast({ message: t('backup.restoreError'), icon: 'alert-circle-outline', tone: 'danger' });
+            } finally {
+              backupFile.current = null;
+              backupPayload.current = null;
+              setBusy(false);
+            }
+          })();
+        },
+      },
+    ]);
+  };
 
   return (
     <KeyboardAvoidingView
@@ -115,8 +190,31 @@ export default function Unlock() {
               <Text style={[typo.caption, { color: theme.colors.accent }]}>{t('unlock.biometric')}</Text>
             </PressableScale>
           )}
+          <PressableScale haptic="light" style={styles.recover} onPress={() => void pickBackup()}>
+            <Ionicons name="archive-outline" size={16} color={theme.colors.textTertiary} />
+            <Text style={[typo.caption, { color: theme.colors.textTertiary }]}>{t('recover.link')}</Text>
+          </PressableScale>
         </Animated.View>
       </View>
+
+      <PasswordPromptModal
+        visible={recoverStep === 'backupPw'}
+        title={t('backup.restoreTitle')}
+        hint={t('backup.restoreHint')}
+        submitLabel={t('common.done')}
+        onCancel={() => setRecoverStep(null)}
+        onSubmit={(pw) => void onBackupPassword(pw)}
+      />
+      <PasswordPromptModal
+        visible={recoverStep === 'newPw'}
+        title={t('recover.newMasterTitle')}
+        hint={t('recover.newMasterHint')}
+        submitLabel={t('common.save')}
+        confirm
+        minLength={8}
+        onCancel={() => setRecoverStep(null)}
+        onSubmit={onNewMasterPassword}
+      />
     </KeyboardAvoidingView>
   );
 }
@@ -139,5 +237,13 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: spacing.sm,
     paddingVertical: spacing.md,
+  },
+  recover: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    paddingVertical: spacing.md,
+    marginTop: spacing.sm,
   },
 });

@@ -75,6 +75,12 @@ interface VaultState {
   exportBackup: (password: string) => Promise<string | null>;
   /** Merges a decrypted backup into the vault; returns imported entry count. */
   importBackup: (payload: BackupPayload) => Promise<number>;
+  /**
+   * Disaster recovery from the lock screen: replaces the (inaccessible)
+   * vault with a fresh one under a NEW master password and fills it from a
+   * decrypted backup. Returns the restored entry count.
+   */
+  recoverFromBackup: (payload: BackupPayload, newMasterPassword: string) => Promise<number>;
 }
 
 /** Field keys whose change should refresh `secretUpdatedAt` (audit input). */
@@ -454,5 +460,16 @@ export const useVault = create<VaultState>()((set, get) => ({
     set({ entries: [...imported, ...get().entries] });
     persist(get);
     return imported.length;
+  },
+
+  recoverFromBackup: async (payload, newMasterPassword) => {
+    // Wipe the inaccessible vault (keys + blob + attachment files) …
+    await attachments.deleteAllAttachments().catch(() => {});
+    await service.eraseVault();
+    // … create a fresh one under the new master password …
+    const { vaultKey } = await service.createVault(newMasterPassword);
+    set({ status: 'unlocked', vaultKey, entries: [], trash: [] });
+    // … and refill it from the backup (re-encrypts attachments under the new key).
+    return get().importBackup(payload);
   },
 }));
