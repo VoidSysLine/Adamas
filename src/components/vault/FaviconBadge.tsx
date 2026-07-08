@@ -5,7 +5,16 @@ import React, { useEffect, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { kindGradient, kindIcon } from '@/constants/schema';
 import { loadAttachment } from '@/lib/attachments';
-import { bankDomain, cardNetwork, CARD_MARKS, cryptoMark, type BrandMark } from '@/lib/brandIcons';
+import {
+  bankDomain,
+  cardNetwork,
+  CARD_MARKS,
+  cryptoMark,
+  insurerDomain,
+  pensionDomain,
+  vehicleBrandDomain,
+  type BrandMark,
+} from '@/lib/brandIcons';
 import { extractDomain, faviconSources, monogram } from '@/lib/favicon';
 import { useVault } from '@/store/vaultStore';
 import { radius } from '@/theme';
@@ -92,13 +101,20 @@ function FaviconBadgeBase({ entry, size = 44 }: Props) {
     };
   }, [entry.avatarId, vaultKey]);
 
-  // Favicon domain: login URLs, plus bank names resolved to their domain.
+  // Favicon domain: login URLs, plus brand names (bank, insurer, pension
+  // provider, car manufacturer) resolved to their domain.
   const domain =
     entry.kind === 'login'
       ? extractDomain(entry.data.url)
       : entry.kind === 'bankAccount'
         ? bankDomain(entry.data.bankName)
-        : null;
+        : entry.kind === 'healthInsurance'
+          ? insurerDomain(entry.data.insurer)
+          : entry.kind === 'pension'
+            ? pensionDomain(entry.data.provider)
+            : entry.kind === 'vehicle'
+              ? vehicleBrandDomain(entry.data.model)
+              : null;
   const sources = domain ? faviconSources(domain) : [];
   const showFavicon = domain !== null && sourceIndex < sources.length;
   const gradient = kindGradient(entry.kind);

@@ -1,10 +1,32 @@
 /**
- * Smart brand icons for finance entries:
+ * Smart brand icons for finance & document entries:
  *  - bank accounts resolve the bank name to a domain → real favicon
  *  - credit cards detect the network from the card number prefix → brand tile
  *  - crypto wallets map the blockchain to its currency symbol + brand color
- * Card/crypto marks render offline; only bank logos need the favicon fetch.
+ *  - health insurance / pension resolve the insurer or provider to a domain
+ *  - vehicles detect the manufacturer from the model name → brand favicon
+ * Card/crypto marks render offline; only the logos need the favicon fetch.
  */
+
+/** Shortcut shared by all name→domain resolvers: the user pasted a domain/URL. */
+function directDomain(name: string): string | null {
+  if (name.includes('.') && !name.includes(' ')) {
+    return name.replace(/^https?:\/\//, '').replace(/\/.*$/, '');
+  }
+  return null;
+}
+
+/** Walks a [pattern, domain] table; first match wins. */
+function matchDomain(name: string | undefined, table: [RegExp, string][]): string | null {
+  const normalized = name?.trim().toLowerCase();
+  if (!normalized) return null;
+  const direct = directDomain(normalized);
+  if (direct) return direct;
+  for (const [pattern, domain] of table) {
+    if (pattern.test(normalized)) return domain;
+  }
+  return null;
+}
 
 /** Well-known banks → domain for the favicon chain. Order matters (first match wins). */
 const BANK_DOMAINS: [RegExp, string][] = [
@@ -44,11 +66,102 @@ const BANK_DOMAINS: [RegExp, string][] = [
 
 /** Resolves a bank name (or pasted domain) to a favicon-able domain. */
 export function bankDomain(bankName: string | undefined): string | null {
-  const name = bankName?.trim().toLowerCase();
+  return matchDomain(bankName, BANK_DOMAINS);
+}
+
+/** German statutory + private health insurers → domain. Order matters (first match wins). */
+const INSURER_DOMAINS: [RegExp, string][] = [
+  [/techniker|\btk\b/, 'tk.de'],
+  [/aok/, 'aok.de'],
+  [/barmer/, 'barmer.de'],
+  [/\bdak\b/, 'dak.de'],
+  [/ikk\s*classic|\bikk\b/, 'ikkclassic.de'],
+  [/kkh/, 'kkh.de'],
+  [/hkk/, 'hkk.de'],
+  [/\bhek\b/, 'hek.de'],
+  [/knappschaft/, 'knappschaft.de'],
+  [/\bsbk\b|siemens.*betriebskrankenkasse/, 'sbk.org'],
+  [/big\s*direkt/, 'big-direkt.de'],
+  [/viactiv/, 'viactiv.de'],
+  [/mhplus/, 'mhplus.de'],
+  [/debeka/, 'debeka.de'],
+  [/allianz/, 'allianz.de'],
+  [/\baxa\b/, 'axa.de'],
+  [/huk/, 'huk.de'],
+  [/ergo\b/, 'ergo.de'],
+  [/signal\s*iduna/, 'signal-iduna.de'],
+  [/hanse\s*merkur/, 'hansemerkur.de'],
+  [/barmenia/, 'barmenia.de'],
+  [/\bdkv\b/, 'dkv.com'],
+  [/gothaer/, 'gothaer.de'],
+  [/continentale/, 'continentale.de'],
+  [/r\s*\+\s*v|r&v/, 'ruv.de'],
+  [/generali/, 'generali.de'],
+  [/w(ü|ue)rttembergische/, 'wuerttembergische.de'],
+  [/hallesche/, 'hallesche.de'],
+  [/arag/, 'arag.de'],
+  [/ottonova/, 'ottonova.de'],
+];
+
+/** Resolves a health insurer name (or pasted domain) to a favicon-able domain. */
+export function insurerDomain(insurerName: string | undefined): string | null {
+  return matchDomain(insurerName, INSURER_DOMAINS);
+}
+
+/** Statutory pension carriers; private providers fall through to the insurer table. */
+const PENSION_DOMAINS: [RegExp, string][] = [
+  [/deutsche\s*rentenversicherung|rentenversicherung|\bdrv\b/, 'deutsche-rentenversicherung.de'],
+  [/knappschaft/, 'knappschaft.de'],
+];
+
+/** Resolves a pension provider (statutory carrier or private insurer) to a domain. */
+export function pensionDomain(providerName: string | undefined): string | null {
+  return matchDomain(providerName, PENSION_DOMAINS) ?? insurerDomain(providerName);
+}
+
+/** Car manufacturers, matched inside the free-text model field ("VW Golf 8"). */
+const VEHICLE_DOMAINS: [RegExp, string][] = [
+  [/volkswagen|\bvw\b/, 'vw.de'],
+  [/\bbmw\b/, 'bmw.de'],
+  [/mercedes|\bamg\b|daimler/, 'mercedes-benz.de'],
+  [/audi/, 'audi.de'],
+  [/opel/, 'opel.de'],
+  [/ford/, 'ford.de'],
+  [/porsche/, 'porsche.com'],
+  [/toyota/, 'toyota.de'],
+  [/tesla/, 'tesla.com'],
+  [/(š|s)koda/, 'skoda-auto.de'],
+  [/cupra/, 'cupraofficial.de'],
+  [/\bseat\b/, 'seat.de'],
+  [/renault/, 'renault.de'],
+  [/peugeot/, 'peugeot.de'],
+  [/citro(ë|e)n/, 'citroen.de'],
+  [/fiat/, 'fiat.de'],
+  [/alfa\s*romeo/, 'alfaromeo.de'],
+  [/hyundai/, 'hyundai.de'],
+  [/\bkia\b/, 'kia.com'],
+  [/mazda/, 'mazda.de'],
+  [/honda/, 'honda.de'],
+  [/nissan/, 'nissan.de'],
+  [/mitsubishi/, 'mitsubishi-motors.de'],
+  [/suzuki/, 'suzuki.de'],
+  [/volvo/, 'volvocars.com'],
+  [/polestar/, 'polestar.com'],
+  [/\bmini\b/, 'mini.de'],
+  [/\bsmart\b/, 'smart.com'],
+  [/dacia/, 'dacia.de'],
+  [/land\s*rover|range\s*rover/, 'landrover.de'],
+  [/jaguar/, 'jaguar.de'],
+  [/jeep/, 'jeep.de'],
+  [/\bbyd\b/, 'byd.com'],
+];
+
+/** Detects the manufacturer in a vehicle model string → favicon-able domain. */
+export function vehicleBrandDomain(model: string | undefined): string | null {
+  const name = model?.trim().toLowerCase();
   if (!name) return null;
-  // The user may simply have entered the bank's website.
-  if (name.includes('.') && !name.includes(' ')) return name.replace(/^https?:\/\//, '').replace(/\/.*$/, '');
-  for (const [pattern, domain] of BANK_DOMAINS) {
+  // No directDomain shortcut here: model names are never domains.
+  for (const [pattern, domain] of VEHICLE_DOMAINS) {
     if (pattern.test(name)) return domain;
   }
   return null;
