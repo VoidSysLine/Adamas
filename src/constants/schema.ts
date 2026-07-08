@@ -121,6 +121,7 @@ export const KIND_REGISTRY: { [K in EntryKind]: KindMeta<K> } = {
       { key: 'firstName', label: 'firstName', type: 'text', hint: 'firstNameExample' },
       { key: 'lastName', label: 'lastName', type: 'text', hint: 'lastNameExample' },
       { key: 'email', label: 'email', type: 'email', hint: 'emailExample' },
+      { key: 'phone', label: 'phoneNumber', type: 'phone', mask: 'phone', hint: 'phoneExample' },
       { key: 'birthDate', label: 'birthDate', type: 'date' },
       { key: 'gender', label: 'gender', type: 'select', options: GENDER_OPTIONS },
       { key: 'street', label: 'street', type: 'text', hint: 'streetExample' },
@@ -242,7 +243,8 @@ export const KIND_REGISTRY: { [K in EntryKind]: KindMeta<K> } = {
     category: 'tech',
     icon: 'wifi-outline',
     fields: [
-      { key: 'ssid', label: 'ssid', type: 'text', hint: 'ssidExample' },
+      // 'username' = no autocorrect/auto-capitalization ("FRITZ!Box 7590 XY").
+      { key: 'ssid', label: 'ssid', type: 'username', hint: 'ssidExample' },
       { key: 'password', label: 'password', type: 'password', secure: true, generator: 'password' },
       { key: 'encryption', label: 'encryption', type: 'select', options: WIFI_ENCRYPTION_OPTIONS },
     ],
@@ -315,7 +317,8 @@ export const KIND_REGISTRY: { [K in EntryKind]: KindMeta<K> } = {
     fields: [
       { key: 'deviceModel', label: 'deviceModel', type: 'text', hint: 'securityKeyExample' },
       { key: 'serialNumber', label: 'serialNumber', type: 'code', hint: 'serialExample' },
-      { key: 'pin', label: 'fidoPin', type: 'pin', mask: 'digits8', secure: true, generator: 'pin' },
+      // FIDO2 PINs may be alphanumeric — 'code' keeps the full keyboard.
+      { key: 'pin', label: 'fidoPin', type: 'code', secure: true, generator: 'pin' },
       { key: 'puk', label: 'puk', type: 'pin', mask: 'digits8', secure: true },
       { key: 'registeredServices', label: 'registeredServices', type: 'multiline', hint: 'registeredServicesExample' },
     ],

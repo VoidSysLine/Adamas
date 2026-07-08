@@ -85,6 +85,8 @@ export const MASKS: Record<MaskKind, Mask> = {
       let raw = onlyDigits(s).slice(0, 4);
       if (raw.length >= 1 && raw[0] > '1') raw = `0${raw}`.slice(0, 4);
       if (raw.length >= 2 && Number(raw.slice(0, 2)) > 12) raw = `12${raw.slice(2)}`;
+      // "00" is no month — hold the leading zero until a valid digit follows.
+      if (raw.startsWith('00')) raw = `0${raw.slice(2)}`;
       return raw;
     },
     format: (raw) => (raw.length > 2 ? `${raw.slice(0, 2)}/${raw.slice(2)}` : raw),

@@ -35,6 +35,7 @@ function keyboardFor(type: FieldType): KeyboardTypeOptions {
       return 'url';
     case 'number':
     case 'pin':
+    case 'monthYear':
       return 'number-pad';
     case 'phone':
       return 'phone-pad';
