@@ -478,6 +478,8 @@ export const de = {
     noTotpSub: 'Weder TOTP in Adamas noch als extern/N. A. markiert.',
     issues: '{count} Funde',
     issue: '1 Fund',
+    inDays: 'in {d} Tagen',
+    daysAgo: 'vor {d} Tagen',
   },
   settings: {
     title: 'Einstellungen',
@@ -1000,6 +1002,8 @@ export const en: Translations = {
     noTotpSub: 'No TOTP in Adamas and not marked external/N/A.',
     issues: '{count} findings',
     issue: '1 finding',
+    inDays: 'in {d} days',
+    daysAgo: '{d} days ago',
   },
   settings: {
     title: 'Settings',

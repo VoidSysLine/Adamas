@@ -41,6 +41,17 @@ export default function AuditScreen() {
     [entries, pwnedCounts],
   );
 
+  /** Human-readable finding detail: breach count, or days until/since. */
+  const detailLabel = (type: AuditIssueType, detail?: string): string | null => {
+    if (!detail) return null;
+    if (type === 'pwned') return detail;
+    const days = parseInt(detail, 10);
+    if (Number.isNaN(days)) return null;
+    if (type === 'expiring') return t('audit.inDays', { d: days });
+    if (type === 'expired' || type === 'old') return t('audit.daysAgo', { d: days });
+    return null;
+  };
+
   const runHibpCheck = async () => {
     if (hibpState === 'checking') return;
     setHibpState('checking');
@@ -151,9 +162,9 @@ export default function AuditScreen() {
                       <Text style={[typo.body, { color: theme.colors.text, flex: 1 }]} numberOfLines={1}>
                         {finding.entry.title}
                       </Text>
-                      {finding.detail && type === 'pwned' && (
+                      {detailLabel(type, finding.detail) && (
                         <Text style={[typo.caption, { color: meta.color, marginRight: 4 }]}>
-                          {finding.detail}
+                          {detailLabel(type, finding.detail)}
                         </Text>
                       )}
                       <Ionicons name="chevron-forward" size={15} color={theme.colors.textTertiary} />
