@@ -49,6 +49,8 @@ function subtitle(entry: VaultEntry): string {
       return [entry.data.licensePlate, entry.data.model].filter(Boolean).join(' · ');
     case 'pension':
       return entry.data.provider ?? '';
+    case 'healthInsurance':
+      return entry.data.insurer ?? '';
     case 'softwareLicense':
       return [entry.data.licensedTo, entry.data.version].filter(Boolean).join(' · ');
     case 'apiKey':
