@@ -1,8 +1,8 @@
 import { Ionicons } from '@expo/vector-icons';
 import * as Crypto from 'expo-crypto';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import React, { useMemo, useState } from 'react';
-import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
+import React, { useMemo, useRef, useState } from 'react';
+import { Alert, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { DateField } from '@/components/ui/DateField';
 import { FormField } from '@/components/ui/FormField';
@@ -106,6 +106,23 @@ export default function EditEntry() {
 
   const passwordKey = useMemo(() => fields.find((f) => f.type === 'password')?.key, [fields]);
 
+  // Snapshot of the form on first render — closing with unsaved changes asks first.
+  const formSnapshot = () => JSON.stringify({ title, notes, data, customFields });
+  const initialForm = useRef<string | null>(null);
+  if (initialForm.current === null) initialForm.current = formSnapshot();
+
+  const onClose = () => {
+    if (formSnapshot() === initialForm.current) {
+      router.back();
+      return;
+    }
+    triggerHaptic('warning');
+    Alert.alert(t('edit.discardTitle'), t('edit.discardMessage'), [
+      { text: t('edit.discardKeep'), style: 'cancel' },
+      { text: t('edit.discardConfirm'), style: 'destructive', onPress: () => router.back() },
+    ]);
+  };
+
   const onSave = () => {
     if (!title.trim()) {
       setTitleError(true);
@@ -140,7 +157,7 @@ export default function EditEntry() {
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
       <View style={styles.nav}>
-        <PressableScale haptic="light" style={styles.navButton} onPress={() => router.back()}>
+        <PressableScale haptic="light" style={styles.navButton} onPress={onClose}>
           <Ionicons name="close" size={24} color={theme.colors.textSecondary} />
         </PressableScale>
         <Text style={[typo.headline, { color: theme.colors.text }]}>

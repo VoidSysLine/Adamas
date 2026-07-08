@@ -263,6 +263,10 @@ export const de = {
     required: 'Bitte gib einen Titel ein',
     generate: 'Generieren',
     pickDate: 'Datum wählen',
+    discardTitle: 'Änderungen verwerfen?',
+    discardMessage: 'Deine Eingaben wurden noch nicht gespeichert.',
+    discardKeep: 'Weiter bearbeiten',
+    discardConfirm: 'Verwerfen',
   },
   scanner: {
     totpTitle: '2FA-QR scannen',
@@ -778,6 +782,10 @@ export const en: Translations = {
     required: 'Please enter a title',
     generate: 'Generate',
     pickDate: 'Pick a date',
+    discardTitle: 'Discard changes?',
+    discardMessage: 'Your input has not been saved yet.',
+    discardKeep: 'Keep editing',
+    discardConfirm: 'Discard',
   },
   scanner: {
     totpTitle: 'Scan 2FA QR',
