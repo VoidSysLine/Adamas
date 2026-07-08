@@ -267,6 +267,9 @@ export const de = {
     discardMessage: 'Deine Eingaben wurden noch nicht gespeichert.',
     discardKeep: 'Weiter bearbeiten',
     discardConfirm: 'Verwerfen',
+    checksumIban: 'IBAN-Prüfsumme stimmt nicht – bitte kontrollieren',
+    checksumCard: 'Prüfziffer der Kartennummer stimmt nicht',
+    checksumTaxId: 'Prüfziffer der Steuer-ID stimmt nicht',
   },
   scanner: {
     totpTitle: '2FA-QR scannen',
@@ -786,6 +789,9 @@ export const en: Translations = {
     discardMessage: 'Your input has not been saved yet.',
     discardKeep: 'Keep editing',
     discardConfirm: 'Discard',
+    checksumIban: 'IBAN checksum does not match – please double-check',
+    checksumCard: 'Card number check digit does not match',
+    checksumTaxId: 'Tax ID check digit does not match',
   },
   scanner: {
     totpTitle: 'Scan 2FA QR',

@@ -16,6 +16,8 @@ import { fieldsOf } from '@/constants/schema';
 import { resolveLanguage, useT } from '@/i18n';
 import { DEFAULT_PASSWORD, generatePassword, generatePin } from '@/lib/generator';
 import { parseTotpScan } from '@/lib/importers/totp';
+import { MASKS, type MaskKind } from '@/lib/masks';
+import { cardNumberValid, ibanValid, taxIdValid } from '@/lib/validate';
 import { useSettings } from '@/store/settingsStore';
 import { useVault } from '@/store/vaultStore';
 import { radius, spacing, type as typo, useTheme } from '@/theme';
@@ -53,6 +55,22 @@ const TITLE_EXAMPLES: Partial<Record<EntryKind, string>> = {
   accessCode: 'Haustür',
   note: 'Tresorcode',
 };
+
+/**
+ * Non-blocking checksum hint under a masked field: i18n key when the complete
+ * value fails its check digit (IBAN mod-97, card Luhn, Steuer-ID), else null.
+ */
+function checksumWarning(
+  mask: MaskKind | undefined,
+  display: string,
+): 'edit.checksumIban' | 'edit.checksumCard' | 'edit.checksumTaxId' | null {
+  if (!mask || !display) return null;
+  const raw = MASKS[mask].strip(display);
+  if (mask === 'iban' && ibanValid(raw) === false) return 'edit.checksumIban';
+  if (mask === 'cardNumber' && cardNumberValid(raw) === false) return 'edit.checksumCard';
+  if (mask === 'taxIdDe' && taxIdValid(raw) === false) return 'edit.checksumTaxId';
+  return null;
+}
 
 /** Create & edit form — fields render dynamically from the kind's schema. */
 export default function EditEntry() {
@@ -214,6 +232,8 @@ export default function EditEntry() {
             );
           }
 
+          const warning = checksumWarning(field.mask, data[field.key] ?? '');
+
           return (
             <View key={field.key} style={styles.fieldBlock}>
               <FormField
@@ -233,6 +253,9 @@ export default function EditEntry() {
                       : undefined
                 }
               />
+              {warning && (
+                <Text style={[typo.caption, { color: theme.colors.warning }]}>{t(warning)}</Text>
+              )}
               {field.type === 'password' && field.key === passwordKey && (
                 <StrengthMeter password={data[field.key] ?? ''} />
               )}
