@@ -167,6 +167,60 @@ export function vehicleBrandDomain(model: string | undefined): string | null {
   return null;
 }
 
+/** German-market mobile carriers → domain. Order matters (first match wins). */
+const SIM_PROVIDER_DOMAINS: [RegExp, string][] = [
+  [/telekom|t-mobile|magenta/, 'telekom.de'],
+  [/vodafone/, 'vodafone.de'],
+  [/\bo2\b|o₂|telef(ó|o)nica/, 'o2online.de'],
+  [/1\s*&\s*1|1und1/, '1und1.de'],
+  [/congstar/, 'congstar.de'],
+  [/aldi\s*talk/, 'alditalk.de'],
+  [/lidl\s*connect/, 'lidl-connect.de'],
+  [/fraenk/, 'fraenk.de'],
+  [/freenet/, 'freenet.de'],
+  [/klarmobil/, 'klarmobil.de'],
+  [/\bblau\b/, 'blau.de'],
+  [/otelo/, 'otelo.de'],
+  [/winsim/, 'winsim.de'],
+  [/premiumsim/, 'premiumsim.de'],
+  [/sim\.?de/, 'sim.de'],
+  [/tchibo/, 'tchibo.de'],
+  [/edeka\s*smart/, 'edeka-smart.de'],
+  [/norma\s*connect/, 'norma-connect.de'],
+  [/swisscom/, 'swisscom.ch'],
+  [/sunrise/, 'sunrise.ch'],
+  [/\ba1\b/, 'a1.net'],
+  [/\bdrei\b|\bhutchison\b/, 'drei.at'],
+];
+
+/** Resolves a mobile carrier name (or pasted domain) to a favicon-able domain. */
+export function simProviderDomain(providerName: string | undefined): string | null {
+  return matchDomain(providerName, SIM_PROVIDER_DOMAINS);
+}
+
+/** FIDO2/U2F hardware key makers, matched inside the device model ("YubiKey 5 NFC"). */
+const SECURITY_KEY_DOMAINS: [RegExp, string][] = [
+  [/yubi(key|co)/, 'yubico.com'],
+  [/nitrokey/, 'nitrokey.com'],
+  [/solo\s*key|solokeys/, 'solokeys.com'],
+  [/titan/, 'store.google.com'],
+  [/feitian/, 'ftsafe.com'],
+  [/token2/, 'token2.com'],
+  [/onlykey/, 'onlykey.io'],
+  [/thetis/, 'thetis.io'],
+  [/trustkey/, 'trustkeysolutions.com'],
+];
+
+/** Detects the maker in a security-key model string → favicon-able domain. */
+export function securityKeyDomain(deviceModel: string | undefined): string | null {
+  const name = deviceModel?.trim().toLowerCase();
+  if (!name) return null;
+  for (const [pattern, domain] of SECURITY_KEY_DOMAINS) {
+    if (pattern.test(name)) return domain;
+  }
+  return null;
+}
+
 export type CardNetwork = 'visa' | 'mastercard' | 'amex' | 'discover' | 'diners' | 'jcb';
 
 /** Detects the card network from the number prefix (IIN ranges). */

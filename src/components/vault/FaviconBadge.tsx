@@ -12,10 +12,12 @@ import {
   cryptoMark,
   insurerDomain,
   pensionDomain,
+  securityKeyDomain,
+  simProviderDomain,
   vehicleBrandDomain,
   type BrandMark,
 } from '@/lib/brandIcons';
-import { extractDomain, faviconSources, monogram } from '@/lib/favicon';
+import { extractDomain, faviconSources, monogram, publicHostDomain } from '@/lib/favicon';
 import { useVault } from '@/store/vaultStore';
 import { radius } from '@/theme';
 import type { VaultEntry } from '@/types/vault';
@@ -72,6 +74,41 @@ interface Props {
 }
 
 /**
+ * Favicon domain per kind: login/license URLs and server hosts directly
+ * (hosts filtered so private infrastructure never hits the favicon services),
+ * brand names (bank, insurer, pension provider, carrier, manufacturer)
+ * resolved via the lookup tables in `brandIcons`.
+ */
+function entryDomain(entry: VaultEntry): string | null {
+  switch (entry.kind) {
+    case 'login':
+      return extractDomain(entry.data.url);
+    case 'softwareLicense':
+      return extractDomain(entry.data.url);
+    case 'server':
+    case 'vpn':
+      return publicHostDomain(entry.data.host);
+    case 'apiKey':
+      // api.example.com rarely serves its own favicon — use the site's.
+      return publicHostDomain(entry.data.url)?.replace(/^api[.-]/, '') ?? null;
+    case 'bankAccount':
+      return bankDomain(entry.data.bankName);
+    case 'healthInsurance':
+      return insurerDomain(entry.data.insurer);
+    case 'pension':
+      return pensionDomain(entry.data.provider);
+    case 'vehicle':
+      return vehicleBrandDomain(entry.data.model);
+    case 'sim':
+      return simProviderDomain(entry.data.provider);
+    case 'securityKey':
+      return securityKeyDomain(entry.data.deviceModel);
+    default:
+      return null;
+  }
+}
+
+/**
  * Entry avatar with a graceful degradation chain:
  * uploaded avatar (identities) → real favicon (Google → DuckDuckGo) →
  * category-gradient icon/monogram. Memoized (see export) so list re-sorts
@@ -101,20 +138,7 @@ function FaviconBadgeBase({ entry, size = 44 }: Props) {
     };
   }, [entry.avatarId, vaultKey]);
 
-  // Favicon domain: login URLs, plus brand names (bank, insurer, pension
-  // provider, car manufacturer) resolved to their domain.
-  const domain =
-    entry.kind === 'login'
-      ? extractDomain(entry.data.url)
-      : entry.kind === 'bankAccount'
-        ? bankDomain(entry.data.bankName)
-        : entry.kind === 'healthInsurance'
-          ? insurerDomain(entry.data.insurer)
-          : entry.kind === 'pension'
-            ? pensionDomain(entry.data.provider)
-            : entry.kind === 'vehicle'
-              ? vehicleBrandDomain(entry.data.model)
-              : null;
+  const domain = entryDomain(entry);
   const sources = domain ? faviconSources(domain) : [];
   const showFavicon = domain !== null && sourceIndex < sources.length;
   const gradient = kindGradient(entry.kind);

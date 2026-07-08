@@ -17,6 +17,19 @@ export function extractDomain(rawUrl: string | undefined): string | null {
   }
 }
 
+/**
+ * Domain for server/VPN hosts. Stricter than `extractDomain`: IP addresses and
+ * LAN-style names (.local, fritz.box, …) yield null so private infrastructure
+ * is never sent to the favicon services.
+ */
+export function publicHostDomain(rawUrl: string | undefined): string | null {
+  const domain = extractDomain(rawUrl);
+  if (!domain) return null;
+  if (/^\d{1,3}(\.\d{1,3}){3}$/.test(domain) || domain.includes(':')) return null;
+  if (/\.(local|localdomain|lan|internal|intern|home|corp|box|arpa)$/.test(domain)) return null;
+  return domain;
+}
+
 export function faviconSources(domain: string): string[] {
   return [
     `https://www.google.com/s2/favicons?sz=128&domain=${encodeURIComponent(domain)}`,
