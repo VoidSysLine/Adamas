@@ -177,6 +177,7 @@ export default function VaultScreen() {
           keyExtractor={keyExtractor}
           contentContainerStyle={{ paddingBottom: insets.bottom + 110, paddingTop: spacing.sm }}
           keyboardShouldPersistTaps="handled"
+          keyboardDismissMode="on-drag"
           renderItem={renderItem}
           initialNumToRender={10}
           maxToRenderPerBatch={10}
