@@ -45,7 +45,10 @@ export function DateField({
   const theme = useTheme();
   const [open, setOpen] = useState(false);
   const parsed = parseFieldDate(value);
-  const [draft, setDraft] = useState<Date>(parsed ?? new Date(2000, 0, 1));
+  // Empty fields start at today — except birthdays (maximumFuture), where the
+  // year 2000 saves decades of spinning backwards.
+  const defaultDraft = () => (maximumFuture ? new Date(2000, 0, 1) : new Date());
+  const [draft, setDraft] = useState<Date>(parsed ?? defaultDraft());
 
   const displayValue = parsed
     ? parsed.toLocaleDateString(locale, { day: '2-digit', month: 'long', year: 'numeric' })
@@ -64,7 +67,7 @@ export function DateField({
   const openPicker = () => {
     // An open keyboard would push the bottom sheet partially off-screen.
     Keyboard.dismiss();
-    setDraft(parsed ?? (minimumToday ? new Date() : new Date(2000, 0, 1)));
+    setDraft(parsed ?? defaultDraft());
     setOpen(true);
   };
 
