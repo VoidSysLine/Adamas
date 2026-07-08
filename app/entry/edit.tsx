@@ -181,7 +181,10 @@ export default function EditEntry() {
         <Text style={[typo.headline, { color: theme.colors.text }]}>
           {existing ? t('edit.editTitle') : t('edit.newTitle', { kind: t(`kinds.${kind}`) })}
         </Text>
-        <View style={styles.navButton} />
+        {/* Save also lives up here so long forms don't force a full scroll. */}
+        <PressableScale haptic="light" style={styles.navButton} onPress={onSave}>
+          <Ionicons name="checkmark" size={26} color={theme.colors.accent} />
+        </PressableScale>
       </View>
 
       <ScrollView
