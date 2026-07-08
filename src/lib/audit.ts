@@ -38,7 +38,8 @@ function twoFactorHandledElsewhere(twoFactor: string | undefined): boolean {
   return twoFactor === 'external' || twoFactor === 'sms' || twoFactor === 'unavailable';
 }
 
-function passwordsOf(entry: VaultEntry): string[] {
+/** Every password-type value of an entry: schema fields plus custom fields. */
+export function passwordsOf(entry: VaultEntry): string[] {
   const data = entry.data as Record<string, string | undefined>;
   const fromSchema = fieldsOf(entry.kind)
     .filter((f) => f.type === 'password')
@@ -88,7 +89,9 @@ export function runAudit(
       }
     }
 
-    for (const password of passwords) {
+    // Deduplicated: the same password twice within ONE entry (e.g. schema +
+    // custom field) is not reuse across services.
+    for (const password of new Set(passwords)) {
       const list = byPassword.get(password) ?? [];
       list.push(entry);
       byPassword.set(password, list);

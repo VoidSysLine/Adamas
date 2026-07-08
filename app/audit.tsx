@@ -9,7 +9,7 @@ import { PressableScale, triggerHaptic } from '@/components/ui/PressableScale';
 import { ScoreRing } from '@/components/ui/ScoreRing';
 import type { IoniconName } from '@/constants/schema';
 import { useT } from '@/i18n';
-import { runAudit, type AuditIssueType } from '@/lib/audit';
+import { passwordsOf, runAudit, type AuditIssueType } from '@/lib/audit';
 import { checkPwnedPasswords } from '@/lib/hibp';
 import { useVault } from '@/store/vaultStore';
 import { radius, spacing, type as typo, useTheme } from '@/theme';
@@ -45,7 +45,9 @@ export default function AuditScreen() {
     if (hibpState === 'checking') return;
     setHibpState('checking');
     try {
-      const passwords = entries.flatMap((e) => (e.kind === 'login' && e.data.password ? [e.data.password] : []));
+      // Same coverage as the audit itself: every password-type field of every
+      // entry (logins, servers, VPNs, wallets, custom fields).
+      const passwords = entries.flatMap(passwordsOf);
       const result = await checkPwnedPasswords(passwords);
       setPwnedCounts(result);
       setHibpState('done');
