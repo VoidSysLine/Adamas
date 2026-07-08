@@ -10,6 +10,7 @@ import { PressableScale, triggerHaptic } from '@/components/ui/PressableScale';
 import { PrismGem } from '@/components/ui/PrismGem';
 import { SegmentedControl } from '@/components/ui/SegmentedControl';
 import { useToast } from '@/components/ui/Toast';
+import { biometricsAvailable } from '@/crypto/vaultService';
 import { useT } from '@/i18n';
 import {
   useSettings,
@@ -44,6 +45,12 @@ export default function SettingsScreen() {
   const changeMasterPassword = useVault((s) => s.changeMasterPassword);
   const [pwStep, setPwStep] = React.useState<'current' | 'next' | null>(null);
   const currentPw = React.useRef('');
+
+  // Hide the biometrics toggle on devices without Face ID/Touch ID/passcode.
+  const [canBiometric, setCanBiometric] = React.useState(true);
+  React.useEffect(() => {
+    void biometricsAvailable().then(setCanBiometric);
+  }, []);
 
   const autoLockLabel = (value: AutoLockPref) =>
     value === 0 ? t('settings.autoLockNow') : value === -1 ? t('settings.autoLockNever') : t('settings.autoLockMinutes', { min: value });
@@ -149,18 +156,20 @@ export default function SettingsScreen() {
         {t('settings.security')}
       </Text>
       <GlassCard style={styles.card}>
-        <View style={styles.row}>
-          <Text style={[typo.body, { color: theme.colors.text, flex: 1 }]}>{t('settings.biometrics')}</Text>
-          <Switch
-            value={settings.biometricsEnabled}
-            onValueChange={(v) => {
-              triggerHaptic('selection');
-              settings.set('biometricsEnabled', v);
-            }}
-            trackColor={{ true: theme.colors.accent, false: theme.colors.surfaceAlt }}
-            thumbColor="#FFFFFF"
-          />
-        </View>
+        {canBiometric && (
+          <View style={styles.row}>
+            <Text style={[typo.body, { color: theme.colors.text, flex: 1 }]}>{t('settings.biometrics')}</Text>
+            <Switch
+              value={settings.biometricsEnabled}
+              onValueChange={(v) => {
+                triggerHaptic('selection');
+                settings.set('biometricsEnabled', v);
+              }}
+              trackColor={{ true: theme.colors.accent, false: theme.colors.surfaceAlt }}
+              thumbColor="#FFFFFF"
+            />
+          </View>
+        )}
         <Text style={[typo.caption, { color: theme.colors.textSecondary, marginTop: spacing.sm }]}>
           {t('settings.autoLock')}
         </Text>
