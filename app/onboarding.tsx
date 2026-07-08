@@ -83,6 +83,8 @@ export default function Onboarding() {
             onChangeText={setConfirm}
             fieldType="password"
             placeholder={t('onboarding.confirmPlaceholder')}
+            returnKeyType="go"
+            onSubmitEditing={() => void onCreate()}
           />
           {error && <Text style={[typo.caption, { color: theme.colors.danger }]}>{error}</Text>}
           <GradientButton

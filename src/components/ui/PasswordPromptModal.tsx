@@ -75,6 +75,8 @@ export function PasswordPromptModal({
               }}
               fieldType="password"
               autoFocus
+              returnKeyType={confirm ? 'next' : 'done'}
+              onSubmitEditing={confirm ? undefined : submit}
             />
             {confirm && (
               <FormField
@@ -85,6 +87,8 @@ export function PasswordPromptModal({
                   setError(null);
                 }}
                 fieldType="password"
+                returnKeyType="done"
+                onSubmitEditing={submit}
               />
             )}
             {error && <Text style={[typo.caption, { color: theme.colors.danger }]}>{error}</Text>}

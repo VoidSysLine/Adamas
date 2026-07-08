@@ -174,6 +174,8 @@ export default function Unlock() {
             }}
             fieldType="password"
             placeholder={t('unlock.placeholder')}
+            returnKeyType="go"
+            onSubmitEditing={() => void onUnlock()}
           />
           {error && (
             <Text style={[typo.caption, { color: theme.colors.danger }]}>{t('unlock.wrongPassword')}</Text>

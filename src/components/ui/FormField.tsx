@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import React, { useState } from 'react';
-import { StyleSheet, Text, TextInput, View, type KeyboardTypeOptions } from 'react-native';
+import { StyleSheet, Text, TextInput, View, type KeyboardTypeOptions, type ReturnKeyTypeOptions } from 'react-native';
 import type { FieldType } from '@/constants/schema';
 import { applyMask, MASKS, type MaskKind } from '@/lib/masks';
 import { fonts, radius, spacing, type as typo, useTheme } from '@/theme';
@@ -17,6 +17,10 @@ interface Props {
   /** Schema `secure` flag: disables keyboard assistance even for text/multiline (seed phrase). */
   sensitive?: boolean;
   autoFocus?: boolean;
+  /** Keyboard return-key label (e.g. 'go' on the unlock screen). */
+  returnKeyType?: ReturnKeyTypeOptions;
+  /** Called when the keyboard return key is pressed. */
+  onSubmitEditing?: () => void;
   /** Renders a generator action inside the field. */
   onGenerate?: () => void;
   /** Renders a QR-scan action inside the field (e.g. TOTP setup codes). */
@@ -40,7 +44,7 @@ function keyboardFor(type: FieldType): KeyboardTypeOptions {
 }
 
 /** Schema-aware form input with floating label, secure toggle and generator slot. */
-export function FormField({ label, value, onChangeText, fieldType = 'text', placeholder, mask, sensitive, autoFocus, onGenerate, onScan }: Props) {
+export function FormField({ label, value, onChangeText, fieldType = 'text', placeholder, mask, sensitive, autoFocus, returnKeyType, onSubmitEditing, onGenerate, onScan }: Props) {
   const theme = useTheme();
   const [focused, setFocused] = useState(false);
   // Masked fields (IBAN, card no., …) stay visible while typing so the live
@@ -85,6 +89,8 @@ export function FormField({ label, value, onChangeText, fieldType = 'text', plac
           secureTextEntry={secure && !revealed}
           multiline={multiline}
           autoFocus={autoFocus}
+          returnKeyType={returnKeyType}
+          onSubmitEditing={onSubmitEditing}
           onFocus={() => setFocused(true)}
           onBlur={() => setFocused(false)}
           style={[
