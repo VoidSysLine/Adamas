@@ -52,9 +52,14 @@ export default function Unlock() {
     if (ok) triggerHaptic('success');
   }, [unlockWithBiometrics, t]);
 
-  // Offer Face ID / fingerprint immediately when the screen appears.
+  // Offer Face ID / fingerprint immediately when the screen appears — exactly
+  // once per lock, no matter how often the deps change while it is visible.
+  const autoPrompted = useRef(false);
   useEffect(() => {
-    if (canBiometric && biometricsEnabled) void tryBiometric();
+    if (canBiometric && biometricsEnabled && !autoPrompted.current) {
+      autoPrompted.current = true;
+      void tryBiometric();
+    }
   }, [canBiometric, biometricsEnabled, tryBiometric]);
 
   const onUnlock = async () => {

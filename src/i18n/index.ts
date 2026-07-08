@@ -1,3 +1,4 @@
+import { useCallback } from 'react';
 import { getLocales } from 'expo-localization';
 import { useSettings } from '@/store/settingsStore';
 import { translations, type Language, type Translations } from './translations';
@@ -31,9 +32,16 @@ export function translate(lang: Language, key: TKey, params?: Record<string, str
   return text;
 }
 
-/** Returns a stable `t()` bound to the active language. */
+/**
+ * Returns a `t()` bound to the active language. Referentially stable across
+ * renders (only changes with the language) so it is safe in effect and
+ * callback dependency arrays.
+ */
 export function useT() {
   const pref = useSettings((s) => s.language);
   const lang = resolveLanguage(pref);
-  return (key: TKey, params?: Record<string, string | number>) => translate(lang, key, params);
+  return useCallback(
+    (key: TKey, params?: Record<string, string | number>) => translate(lang, key, params),
+    [lang],
+  );
 }
