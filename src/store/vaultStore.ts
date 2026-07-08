@@ -312,9 +312,11 @@ export const useVault = create<VaultState>()((set, get) => ({
     const bySeedTarget = new Map(matches.map((m) => [m.entryId, m.seed]));
     const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
+    let updatedCount = 0;
     const updated = get().entries.map((entry) => {
       const seed = bySeedTarget.get(entry.id);
       if (!seed || entry.kind !== 'login' || entry.data.totpSeed) return entry;
+      updatedCount++;
       return { ...entry, updatedAt: now, data: { ...entry.data, totpSeed: seed } } as VaultEntry;
     });
 
@@ -325,6 +327,7 @@ export const useVault = create<VaultState>()((set, get) => ({
       favorite: false,
       createdAt: now,
       updatedAt: now,
+      secretUpdatedAt: now,
       data: {
         totpSeed: item.seed,
         email: item.account && EMAIL_RE.test(item.account) ? item.account : undefined,
@@ -334,7 +337,7 @@ export const useVault = create<VaultState>()((set, get) => ({
 
     set({ entries: [...created, ...updated] });
     persist(get);
-    return { updated: bySeedTarget.size, created: created.length };
+    return { updated: updatedCount, created: created.length };
   },
 
   addAttachment: async (entryId, input) => {
