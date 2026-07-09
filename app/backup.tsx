@@ -14,6 +14,7 @@ import { PressableScale, triggerHaptic } from '@/components/ui/PressableScale';
 import { useToast } from '@/components/ui/Toast';
 import { useT } from '@/i18n';
 import { readBackup } from '@/lib/backup';
+import { useSettings } from '@/store/settingsStore';
 import { useVault } from '@/store/vaultStore';
 import { radius, spacing, type as typo, useTheme } from '@/theme';
 
@@ -47,6 +48,7 @@ export default function BackupScreen() {
       if (await Sharing.isAvailableAsync()) {
         await Sharing.shareAsync(uri, { mimeType: 'application/json', dialogTitle: t('backup.exportTitle') });
       }
+      useSettings.getState().set('lastBackupAt', Date.now());
       triggerHaptic('success');
     } catch {
       triggerHaptic('error');
@@ -86,6 +88,8 @@ export default function BackupScreen() {
         return;
       }
       const count = await importBackup(result.payload);
+      // The picked file proves a backup of this data exists.
+      useSettings.getState().set('lastBackupAt', Date.now());
       triggerHaptic('success');
       toast({ message: t('backup.restored', { count }), icon: 'checkmark-circle-outline', tone: 'success' });
       router.back();
@@ -101,7 +105,13 @@ export default function BackupScreen() {
   return (
     <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
       <View style={[styles.nav, { paddingTop: insets.top + spacing.sm }]}>
-        <PressableScale haptic="light" style={styles.navButton} onPress={() => router.back()}>
+        <PressableScale
+          haptic="light"
+          style={styles.navButton}
+          accessibilityRole="button"
+          accessibilityLabel={t('common.back')}
+          onPress={() => router.back()}
+        >
           <Ionicons name="chevron-back" size={24} color={theme.colors.text} />
         </PressableScale>
         <Text style={[typo.headline, { color: theme.colors.text }]}>{t('backup.title')}</Text>

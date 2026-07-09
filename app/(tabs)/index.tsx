@@ -6,6 +6,7 @@ import { FlatList, ScrollView, StyleSheet, Text, TextInput, View } from 'react-n
 import Animated, { FadeIn } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { EntryListItem } from '@/components/vault/EntryListItem';
+import { GlassCard } from '@/components/ui/GlassCard';
 import { PressableScale, triggerHaptic } from '@/components/ui/PressableScale';
 import { CATEGORY_ORDER, categoryOf } from '@/constants/schema';
 import { useT } from '@/i18n';
@@ -15,6 +16,12 @@ import { fonts, radius, spacing, type as typo, useTheme } from '@/theme';
 import type { Category, VaultEntry } from '@/types/vault';
 
 type Filter = 'all' | 'favorites' | Category;
+
+const DAY_MS = 24 * 60 * 60 * 1000;
+/** Banner appears when the newest backup is older than this. */
+const BACKUP_REMIND_DAYS = 14;
+/** Dismissing the banner silences it for this long. */
+const BACKUP_SNOOZE_DAYS = 7;
 
 function matchesQuery(entry: VaultEntry, query: string): boolean {
   const haystack = [
@@ -40,6 +47,16 @@ export default function VaultScreen() {
 
   const [query, setQuery] = useState('');
   const [filter, setFilter] = useState<Filter>('all');
+
+  // Backup reminder: without sync, a stale backup is the app's biggest
+  // data-loss risk (Expo-Go sandbox!). Tapping opens backup, X snoozes.
+  const lastBackupAt = useSettings((s) => s.lastBackupAt);
+  const backupSnoozedAt = useSettings((s) => s.backupSnoozedAt);
+  const backupAgeDays = lastBackupAt ? Math.floor((Date.now() - lastBackupAt) / DAY_MS) : null;
+  const showBackupBanner =
+    entries.length > 0 &&
+    (backupAgeDays === null || backupAgeDays >= BACKUP_REMIND_DAYS) &&
+    (backupSnoozedAt === null || Date.now() - backupSnoozedAt > BACKUP_SNOOZE_DAYS * DAY_MS);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -101,7 +118,12 @@ export default function VaultScreen() {
               <Ionicons name="swap-vertical" size={15} color={theme.colors.textSecondary} />
               <Text style={[typo.caption, { color: theme.colors.textSecondary }]}>{t(`sort.${sortMode}`)}</Text>
             </PressableScale>
-            <PressableScale haptic="medium" onPress={() => router.push('/new')}>
+            <PressableScale
+              haptic="medium"
+              accessibilityRole="button"
+              accessibilityLabel={t('vault.newEntry')}
+              onPress={() => router.push('/new')}
+            >
               <LinearGradient
                 colors={theme.colors.heroGradient}
                 start={{ x: 0, y: 0 }}
@@ -126,11 +148,38 @@ export default function VaultScreen() {
             style={[styles.searchInput, { color: theme.colors.text }]}
           />
           {query.length > 0 && (
-            <PressableScale haptic="none" onPress={() => setQuery('')}>
+            <PressableScale
+              haptic="none"
+              accessibilityRole="button"
+              accessibilityLabel={t('a11y.clearSearch')}
+              onPress={() => setQuery('')}
+            >
               <Ionicons name="close-circle" size={17} color={theme.colors.textTertiary} />
             </PressableScale>
           )}
         </View>
+
+        {showBackupBanner && (
+          <PressableScale haptic="light" onPress={() => router.push('/backup')}>
+            <GlassCard style={styles.backupBanner}>
+              <Ionicons name="archive-outline" size={17} color={theme.colors.warning} />
+              <Text style={[typo.caption, { color: theme.colors.textSecondary, flex: 1 }]} numberOfLines={2}>
+                {backupAgeDays === null
+                  ? t('backup.reminderNever')
+                  : t('backup.reminderOld', { days: backupAgeDays })}
+              </Text>
+              <PressableScale
+                haptic="none"
+                style={styles.backupBannerClose}
+                accessibilityRole="button"
+                accessibilityLabel={t('backup.reminderLater')}
+                onPress={() => setSetting('backupSnoozedAt', Date.now())}
+              >
+                <Ionicons name="close" size={16} color={theme.colors.textTertiary} />
+              </PressableScale>
+            </GlassCard>
+          </PressableScale>
+        )}
 
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chips}>
           {filters.map((item) => {
@@ -237,6 +286,19 @@ const styles = StyleSheet.create({
   chips: {
     gap: spacing.sm,
     paddingBottom: spacing.sm,
+  },
+  backupBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm + 2,
+  },
+  backupBannerClose: {
+    width: 28,
+    height: 28,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   chip: {
     paddingHorizontal: spacing.md + 2,

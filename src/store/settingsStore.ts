@@ -23,6 +23,12 @@ interface SettingsState {
   biometricsEnabled: boolean;
   /** Require biometric/device auth before revealing or copying a secret. */
   revealAuth: boolean;
+  /** Fetch brand logos (favicons) via Google/DuckDuckGo — privacy opt-out. */
+  brandIcons: boolean;
+  /** Timestamp of the last successful backup export/restore (null = never). */
+  lastBackupAt: number | null;
+  /** When the backup reminder banner was dismissed (snoozes it). */
+  backupSnoozedAt: number | null;
   appIcon: 'obsidian' | 'ice' | 'gold';
   set: <K extends keyof SettingsState>(key: K, value: SettingsState[K]) => void;
 }
@@ -38,13 +44,16 @@ export const useSettings = create<SettingsState>()(
       sortMode: 'az',
       biometricsEnabled: true,
       revealAuth: false,
+      brandIcons: true,
+      lastBackupAt: null,
+      backupSnoozedAt: null,
       appIcon: 'obsidian',
       set: (key, value) => set({ [key]: value } as Pick<SettingsState, typeof key>),
     }),
     {
       name: 'adamas.settings',
       storage: createJSONStorage(() => AsyncStorage),
-      partialize: ({ theme, language, autoLock, clipboardClear, sortMode, biometricsEnabled, revealAuth, appIcon }) => ({
+      partialize: ({
         theme,
         language,
         autoLock,
@@ -52,6 +61,21 @@ export const useSettings = create<SettingsState>()(
         sortMode,
         biometricsEnabled,
         revealAuth,
+        brandIcons,
+        lastBackupAt,
+        backupSnoozedAt,
+        appIcon,
+      }) => ({
+        theme,
+        language,
+        autoLock,
+        clipboardClear,
+        sortMode,
+        biometricsEnabled,
+        revealAuth,
+        brandIcons,
+        lastBackupAt,
+        backupSnoozedAt,
         appIcon,
       }),
     },
