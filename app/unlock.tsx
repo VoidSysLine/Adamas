@@ -20,6 +20,7 @@ import { useToast } from '@/components/ui/Toast';
 import { biometricsAvailable } from '@/crypto/vaultService';
 import { useT } from '@/i18n';
 import { readBackup, type BackupPayload } from '@/lib/backup';
+import { recordFailedUnlock, resetUnlockThrottle, throttleRemainingSeconds } from '@/lib/unlockThrottle';
 import { useSettings } from '@/store/settingsStore';
 import { useVault } from '@/store/vaultStore';
 import { spacing, type as typo, useTheme } from '@/theme';
@@ -41,15 +42,29 @@ export default function Unlock() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(false);
   const [canBiometric, setCanBiometric] = useState(false);
+  const [waitSeconds, setWaitSeconds] = useState(0);
   const shake = useSharedValue(0);
 
   useEffect(() => {
     void biometricsAvailable().then(setCanBiometric);
+    // A running lockout survives app restarts.
+    void throttleRemainingSeconds().then(setWaitSeconds);
   }, []);
+
+  // Ticks the lockout countdown down to zero.
+  const throttled = waitSeconds > 0;
+  useEffect(() => {
+    if (!throttled) return;
+    const interval = setInterval(() => setWaitSeconds((s) => Math.max(0, s - 1)), 1000);
+    return () => clearInterval(interval);
+  }, [throttled]);
 
   const tryBiometric = useCallback(async () => {
     const ok = await unlockWithBiometrics(t('unlock.biometricPrompt'));
-    if (ok) triggerHaptic('success');
+    if (ok) {
+      triggerHaptic('success');
+      void resetUnlockThrottle();
+    }
   }, [unlockWithBiometrics, t]);
 
   // Offer Face ID / fingerprint immediately when the screen appears — exactly
@@ -63,15 +78,18 @@ export default function Unlock() {
   }, [canBiometric, biometricsEnabled, tryBiometric]);
 
   const onUnlock = async () => {
-    if (!password || busy) return;
+    if (!password || busy || waitSeconds > 0) return;
     setBusy(true);
     setError(false);
     const ok = await unlockWithPassword(password);
     setBusy(false);
     if (ok) {
       triggerHaptic('success');
+      void resetUnlockThrottle();
       return;
     }
+    const wait = await recordFailedUnlock();
+    if (wait > 0) setWaitSeconds(wait);
     setError(true);
     setPassword('');
     triggerHaptic('error');
@@ -135,6 +153,7 @@ export default function Unlock() {
             setBusy(true);
             try {
               const count = await recoverFromBackup(payload, newPassword);
+              useSettings.getState().set('lastBackupAt', Date.now());
               triggerHaptic('success');
               toast({ message: t('backup.restored', { count }), icon: 'checkmark-circle-outline', tone: 'success' });
             } catch {
@@ -181,10 +200,16 @@ export default function Unlock() {
             <Text style={[typo.caption, { color: theme.colors.danger }]}>{t('unlock.wrongPassword')}</Text>
           )}
           <GradientButton
-            label={busy ? t('unlock.unlocking') : t('unlock.unlock')}
+            label={
+              waitSeconds > 0
+                ? t('unlock.throttled', { s: waitSeconds })
+                : busy
+                  ? t('unlock.unlocking')
+                  : t('unlock.unlock')
+            }
             onPress={onUnlock}
             loading={busy}
-            disabled={!password}
+            disabled={!password || waitSeconds > 0}
             haptic="none"
           />
           {canBiometric && (
