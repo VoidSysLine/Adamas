@@ -18,6 +18,7 @@ import {
   type BrandMark,
 } from '@/lib/brandIcons';
 import { extractDomain, faviconSources, monogram, publicHostDomain } from '@/lib/favicon';
+import { useSettings } from '@/store/settingsStore';
 import { useVault } from '@/store/vaultStore';
 import { radius } from '@/theme';
 import type { VaultEntry } from '@/types/vault';
@@ -138,7 +139,10 @@ function FaviconBadgeBase({ entry, size = 44 }: Props) {
     };
   }, [entry.avatarId, vaultKey]);
 
-  const domain = entryDomain(entry);
+  // Privacy opt-out: with brand icons off, no favicon request ever leaves the
+  // device — offline marks (card network, crypto symbol) still render below.
+  const brandIconsEnabled = useSettings((s) => s.brandIcons);
+  const domain = brandIconsEnabled ? entryDomain(entry) : null;
   const sources = domain ? faviconSources(domain) : [];
   const showFavicon = domain !== null && sourceIndex < sources.length;
   const gradient = kindGradient(entry.kind);

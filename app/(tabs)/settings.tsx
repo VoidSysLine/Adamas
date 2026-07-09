@@ -237,6 +237,21 @@ export default function SettingsScreen() {
             thumbColor="#FFFFFF"
           />
         </View>
+        <View style={[styles.row, { marginTop: spacing.sm }]}>
+          <View style={{ flex: 1 }}>
+            <Text style={[typo.body, { color: theme.colors.text }]}>{t('settings.brandIcons')}</Text>
+            <Text style={[typo.caption, { color: theme.colors.textTertiary }]}>{t('settings.brandIconsSub')}</Text>
+          </View>
+          <Switch
+            value={settings.brandIcons}
+            onValueChange={(v) => {
+              triggerHaptic('selection');
+              settings.set('brandIcons', v);
+            }}
+            trackColor={{ true: theme.colors.accent, false: theme.colors.surfaceAlt }}
+            thumbColor="#FFFFFF"
+          />
+        </View>
         <PressableScale
           haptic="light"
           style={[styles.lockButton, { borderColor: theme.colors.border }]}
