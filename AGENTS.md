@@ -12,9 +12,9 @@ Premium-Passwort-Manager (React Native / Expo), **muss zu 100 % in Expo Go laufe
 
 ## Workflow (jede Änderung)
 
-1. Code ändern → 2. `npx tsc --noEmit` (muss leer sein) → 3. `EXPO_OFFLINE=1 npx expo export --platform ios --output-dir /tmp/adamas-verify` (muss durchlaufen) → 4. **pro Feature einzeln committen & pushen** (Branch `claude/charming-dirac-elwevt`), Commit-Messages auf Deutsch.
-- Logik ohne UI (Parser, Masken, Krypto) zusätzlich per Node-Test verifizieren: Datei nach `/tmp/<x>/` kopieren, `@/`-Imports per `sed` umbiegen, expo-Module stubben, mit `npx tsc <file> --module commonjs --esModuleInterop --skipLibCheck` kompilieren, Testskript laufen lassen (Beispiele: bisherige Commits für TOTP/HIBP/Backup/Masken).
-- Dem User am Ende immer den Fetch-Befehl nennen: `git pull origin claude/charming-dirac-elwevt` (+ `npm install --legacy-peer-deps` nur wenn neue Pakete) + `npx expo start -c`.
+1. Code ändern → 2. `npx tsc --noEmit` (muss leer sein) → 3. `npm test` (Node-Unit-Tests, muss grün sein) → 4. `EXPO_OFFLINE=1 npx expo export --platform ios --output-dir /tmp/adamas-verify` (muss durchlaufen) → 5. **pro Feature einzeln committen & pushen** (Branch: der jeweils in der Session zugewiesene `claude/…`-Branch — **immer den aktuellen Branch-Namen an den User weitergeben**, alte Branches nicht wiederverwenden), Commit-Messages auf Deutsch.
+- Neue Logik ohne UI (Parser, Masken, Krypto, Validierung) direkt in `tests/unit.test.ts` mitabdecken — `scripts/test.sh` kopiert die Module nach `.testbuild/`, biegt `@/`-Imports um und stubbt Expo; läuft in reinem Node ohne Jest.
+- Dem User am Ende immer den Fetch-Befehl mit dem **aktuellen** Branch nennen: `git pull origin <branch>` (+ `npm install --legacy-peer-deps` nur wenn neue Pakete) + `npx expo start -c`.
 
 ## Architektur-Kern
 
@@ -28,8 +28,8 @@ Premium-Passwort-Manager (React Native / Expo), **muss zu 100 % in Expo Go laufe
 
 ## Feature-Inventar (fertig)
 
-Onboarding/Unlock (+ Backup-Recovery am Lock-Screen, Biometrie/Gerätecode via `getEnrolledLevelAsync`), ~20 Eintragstypen inkl. Fahrzeug (TÜV-Audit), Steuer/KVNR/Rente (deutsche Formate), Krypto- & Hardware-Wallet, VPN, YubiKey, Custom Fields (10 Typen), verschlüsselte Foto-Anhänge (max 2, EXIF-Strip) + Identitäts-Avatare, WLAN-QR (Teilen/Speichern), TOTP (Ring, QR-Scan, Ente-Auth-Import), Bitwarden-Import, Security-Audit (%-Konzept, HIBP k-Anonymity opt-in, 2FA-Status extern/N.A.), Generator, Backup/Restore (.adamas), Master-PW ändern, Clipboard-Auto-Clear, Reveal-Auth, Papierkorb (30 Tage), Passwort-Verlauf, Duplizieren, Sortier-Umschalter, Marken-Icons (Bank-Favicon, Kartennetzwerk aus IIN, Krypto-Symbole), Kreditkarten-Visual, DE/EN.
+Onboarding/Unlock (+ Backup-Recovery am Lock-Screen, Biometrie/Gerätecode via `getEnrolledLevelAsync`, Fehlversuchs-Bremse mit wachsender Wartezeit), ~20 Eintragstypen inkl. Fahrzeug (TÜV-Audit), Steuer/KVNR/Rente (deutsche Formate), Krypto- & Hardware-Wallet, VPN, YubiKey, Custom Fields (10 Typen), verschlüsselte Foto-Anhänge (max 2, EXIF-Strip) + Identitäts-Avatare, WLAN-QR (Teilen/Speichern), TOTP (Ring, QR-Scan, Ente-Auth-Import), Bitwarden-Import, Security-Audit (%-Konzept, HIBP k-Anonymity opt-in über ALLE Passwortfelder, 2FA-Status extern/N.A., Tage-Angaben bei Ablauf-Funden), Generator, Backup/Restore (.adamas) + Backup-Erinnerungs-Banner (14 Tage, 7 Tage Snooze), Master-PW ändern, Clipboard-Auto-Clear, Reveal-Auth, Papierkorb (30 Tage), Passwort-Verlauf, Duplizieren, Sortier-Umschalter, Marken-Icons für Finanzen/Dokumente/Tech (Bank/Versicherer/Provider/Hersteller-Favicon via `src/lib/brandIcons.ts`, Kartennetzwerk aus IIN, Krypto-Symbole; per Setting abschaltbar, Server-Hosts durch `publicHostDomain` privacy-gefiltert), Prüfsummen-Warnungen (IBAN mod-97, Karten-Luhn, Steuer-ID — `src/lib/validate.ts`, nicht blockierend), Kreditkarten-Visual, Privacy-Overlay im App-Switcher, Error Boundary, VoiceOver-Labels auf allen Icon-Buttons, Verwerfen-Schutz + Speichern-Button oben im Editor, Return-Taste schließt Passwort-Dialoge ab, DE/EN.
 
 ## Offene Roadmap (User-bestätigt, nicht begonnen)
 
-„Zuletzt benutzt“-Sektion (lastUsed-Tracking) · Generator-Verlauf · Tags/Labels · weitere Sprachen (FR/ES/IT) · Backup-Erinnerung (Banner wenn Backup > X Tage alt; User war interessiert, Intervall unklar) · Nur mit Dev-Build: Autofill, Passkey-Provider, Sync.
+„Zuletzt benutzt“-Sektion (lastUsed-Tracking) · Generator-Verlauf · Tags/Labels · weitere Sprachen (FR/ES/IT) · Nur mit Dev-Build (= Ebene A der Release-Readiness): EAS-Build + Bundle-IDs, native KDF-Härtung (Argon2), Autofill, Passkey-Provider, Sync.
