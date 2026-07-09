@@ -233,6 +233,7 @@ export const de = {
     wrongPassword: 'Falsches Master-Passwort',
     biometric: 'Mit Biometrie entsperren',
     biometricPrompt: 'Adamas entsperren',
+    throttled: 'Zu viele Versuche – warte {s} s',
   },
   vault: {
     title: 'Tresor',
@@ -363,6 +364,9 @@ export const de = {
     restoreError: 'Datei konnte nicht gelesen werden. Ist es ein Adamas-Backup?',
     wrongPassword: 'Falsches Backup-Passwort.',
     restored: '{count} Einträge wiederhergestellt',
+    reminderNever: 'Noch kein Backup erstellt – dein Tresor existiert nur auf diesem Gerät.',
+    reminderOld: 'Letztes Backup vor {days} Tagen – Zeit für ein neues.',
+    reminderLater: 'Später erinnern',
   },
   attachments: {
     title: 'Anhänge',
@@ -500,6 +504,8 @@ export const de = {
     clipboardSeconds: 'Nach {s} Sek.',
     revealAuth: 'Biometrie vor Anzeige',
     revealAuthSub: 'Face ID / PIN, bevor Geheimnisse angezeigt oder kopiert werden',
+    brandIcons: 'Marken-Logos laden',
+    brandIconsSub: 'Logos werden über Google/DuckDuckGo geladen – aus: nur lokale Symbole',
     biometrics: 'Biometrische Entsperrung',
     changePassword: 'Master-Passwort ändern',
     currentPwHint: 'Gib zunächst dein aktuelles Master-Passwort ein.',
@@ -517,6 +523,21 @@ export const de = {
     saved: 'Gespeichert',
     deleted: 'Eintrag gelöscht',
     locked: 'Tresor gesperrt',
+  },
+  error: {
+    title: 'Etwas ist schiefgelaufen',
+    message: 'Ein unerwarteter Fehler ist aufgetreten. Dein Tresor ist davon nicht betroffen.',
+    retry: 'Neu laden',
+  },
+  a11y: {
+    copy: 'Kopieren',
+    openLink: 'Link öffnen',
+    clearSearch: 'Suche leeren',
+    clearField: 'Feld leeren',
+    favoriteOn: 'Zu Favoriten hinzufügen',
+    favoriteOff: 'Aus Favoriten entfernen',
+    restore: 'Wiederherstellen',
+    scanQr: 'QR-Code scannen',
   },
 };
 
@@ -755,6 +776,7 @@ export const en: Translations = {
     unlock: 'Unlock',
     unlocking: 'Decrypting…',
     wrongPassword: 'Wrong master password',
+    throttled: 'Too many attempts – wait {s} s',
     biometric: 'Unlock with biometrics',
     biometricPrompt: 'Unlock Adamas',
   },
@@ -887,6 +909,9 @@ export const en: Translations = {
     restoreError: 'Could not read the file. Is it an Adamas backup?',
     wrongPassword: 'Wrong backup password.',
     restored: '{count} entries restored',
+    reminderNever: 'No backup yet – your vault only exists on this device.',
+    reminderOld: 'Last backup {days} days ago – time for a fresh one.',
+    reminderLater: 'Remind me later',
   },
   attachments: {
     title: 'Attachments',
@@ -1024,6 +1049,8 @@ export const en: Translations = {
     clipboardSeconds: 'After {s} sec',
     revealAuth: 'Biometrics before reveal',
     revealAuthSub: 'Face ID / PIN before secrets are shown or copied',
+    brandIcons: 'Load brand logos',
+    brandIconsSub: 'Logos are fetched via Google/DuckDuckGo – off: local symbols only',
     biometrics: 'Biometric unlock',
     changePassword: 'Change master password',
     currentPwHint: 'First enter your current master password.',
@@ -1041,6 +1068,21 @@ export const en: Translations = {
     saved: 'Saved',
     deleted: 'Entry deleted',
     locked: 'Vault locked',
+  },
+  error: {
+    title: 'Something went wrong',
+    message: 'An unexpected error occurred. Your vault is not affected.',
+    retry: 'Reload',
+  },
+  a11y: {
+    copy: 'Copy',
+    openLink: 'Open link',
+    clearSearch: 'Clear search',
+    clearField: 'Clear field',
+    favoriteOn: 'Add to favorites',
+    favoriteOff: 'Remove from favorites',
+    restore: 'Restore',
+    scanQr: 'Scan QR code',
   },
 };
 
