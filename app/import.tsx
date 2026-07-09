@@ -98,7 +98,13 @@ export default function ImportScreen() {
   return (
     <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
       <View style={[styles.nav, { paddingTop: insets.top + spacing.sm }]}>
-        <PressableScale haptic="light" style={styles.navButton} onPress={() => router.back()}>
+        <PressableScale
+          haptic="light"
+          style={styles.navButton}
+          accessibilityRole="button"
+          accessibilityLabel={t('common.back')}
+          onPress={() => router.back()}
+        >
           <Ionicons name="chevron-back" size={24} color={theme.colors.text} />
         </PressableScale>
         <Text style={[typo.headline, { color: theme.colors.text }]}>{t('importer.title')}</Text>

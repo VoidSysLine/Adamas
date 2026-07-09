@@ -175,14 +175,26 @@ export default function EditEntry() {
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
       <View style={styles.nav}>
-        <PressableScale haptic="light" style={styles.navButton} onPress={onClose}>
+        <PressableScale
+          haptic="light"
+          style={styles.navButton}
+          accessibilityRole="button"
+          accessibilityLabel={t('common.cancel')}
+          onPress={onClose}
+        >
           <Ionicons name="close" size={24} color={theme.colors.textSecondary} />
         </PressableScale>
         <Text style={[typo.headline, { color: theme.colors.text }]}>
           {existing ? t('edit.editTitle') : t('edit.newTitle', { kind: t(`kinds.${kind}`) })}
         </Text>
         {/* Save also lives up here so long forms don't force a full scroll. */}
-        <PressableScale haptic="light" style={styles.navButton} onPress={onSave}>
+        <PressableScale
+          haptic="light"
+          style={styles.navButton}
+          accessibilityRole="button"
+          accessibilityLabel={t('common.save')}
+          onPress={onSave}
+        >
           <Ionicons name="checkmark" size={26} color={theme.colors.accent} />
         </PressableScale>
       </View>
@@ -304,6 +316,8 @@ export default function EditEntry() {
             <PressableScale
               haptic="light"
               style={styles.customDelete}
+              accessibilityRole="button"
+              accessibilityLabel={`${field.label} ${t('common.delete')}`}
               onPress={() => setCustomFields((list) => list.filter((f) => f.id !== field.id))}
             >
               <Ionicons name="trash-outline" size={18} color={theme.colors.danger} />

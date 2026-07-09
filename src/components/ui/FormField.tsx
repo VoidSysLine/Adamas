@@ -2,6 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import React, { useState } from 'react';
 import { StyleSheet, Text, TextInput, View, type KeyboardTypeOptions, type ReturnKeyTypeOptions } from 'react-native';
 import type { FieldType } from '@/constants/schema';
+import { useT } from '@/i18n';
 import { applyMask, MASKS, type MaskKind } from '@/lib/masks';
 import { fonts, radius, spacing, type as typo, useTheme } from '@/theme';
 import { PressableScale, triggerHaptic } from './PressableScale';
@@ -47,6 +48,7 @@ function keyboardFor(type: FieldType): KeyboardTypeOptions {
 /** Schema-aware form input with floating label, secure toggle and generator slot. */
 export function FormField({ label, value, onChangeText, fieldType = 'text', placeholder, mask, sensitive, autoFocus, returnKeyType, onSubmitEditing, onGenerate, onScan }: Props) {
   const theme = useTheme();
+  const t = useT();
   const [focused, setFocused] = useState(false);
   // Masked fields (IBAN, card no., …) stay visible while typing so the live
   // grouping is legible; free secrets like passwords start hidden.
@@ -105,6 +107,8 @@ export function FormField({ label, value, onChangeText, fieldType = 'text', plac
           <PressableScale
             haptic="none"
             style={styles.action}
+            accessibilityRole="button"
+            accessibilityLabel={revealed ? t('detail.hide') : t('detail.reveal')}
             onPress={() => {
               triggerHaptic('selection');
               setRevealed((r) => !r);
@@ -118,12 +122,24 @@ export function FormField({ label, value, onChangeText, fieldType = 'text', plac
           </PressableScale>
         )}
         {onScan && (
-          <PressableScale haptic="medium" style={styles.action} onPress={onScan}>
+          <PressableScale
+            haptic="medium"
+            style={styles.action}
+            accessibilityRole="button"
+            accessibilityLabel={t('a11y.scanQr')}
+            onPress={onScan}
+          >
             <Ionicons name="qr-code-outline" size={18} color={theme.colors.accent} />
           </PressableScale>
         )}
         {onGenerate && (
-          <PressableScale haptic="medium" style={styles.action} onPress={onGenerate}>
+          <PressableScale
+            haptic="medium"
+            style={styles.action}
+            accessibilityRole="button"
+            accessibilityLabel={t('edit.generate')}
+            onPress={onGenerate}
+          >
             <Ionicons name="sparkles" size={18} color={theme.colors.accent} />
           </PressableScale>
         )}

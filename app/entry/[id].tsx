@@ -90,11 +90,23 @@ export default function EntryDetail() {
   return (
     <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
       <View style={[styles.nav, { paddingTop: insets.top + spacing.sm }]}>
-        <PressableScale haptic="light" style={styles.navButton} onPress={() => router.back()}>
+        <PressableScale
+          haptic="light"
+          style={styles.navButton}
+          accessibilityRole="button"
+          accessibilityLabel={t('common.back')}
+          onPress={() => router.back()}
+        >
           <Ionicons name="chevron-back" size={24} color={theme.colors.text} />
         </PressableScale>
         <View style={styles.navActions}>
-          <PressableScale haptic="selection" style={styles.navButton} onPress={() => toggleFavorite(entry.id)}>
+          <PressableScale
+            haptic="selection"
+            style={styles.navButton}
+            accessibilityRole="button"
+            accessibilityLabel={t(entry.favorite ? 'a11y.favoriteOff' : 'a11y.favoriteOn')}
+            onPress={() => toggleFavorite(entry.id)}
+          >
             <Ionicons
               name={entry.favorite ? 'star' : 'star-outline'}
               size={21}
@@ -104,6 +116,8 @@ export default function EntryDetail() {
           <PressableScale
             haptic="light"
             style={styles.navButton}
+            accessibilityRole="button"
+            accessibilityLabel={t('common.edit')}
             onPress={() => router.push({ pathname: '/entry/edit', params: { id: entry.id } })}
           >
             <Ionicons name="create-outline" size={22} color={theme.colors.text} />

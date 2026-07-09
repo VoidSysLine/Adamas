@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { Keyboard, Modal, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 import { GradientButton } from './GradientButton';
 import { PressableScale, triggerHaptic } from './PressableScale';
+import { useT } from '@/i18n';
 import { parseFieldDate } from '@/lib/dates';
 import { fonts, radius, spacing, type as typo, useTheme } from '@/theme';
 
@@ -43,6 +44,7 @@ export function DateField({
   minimumToday,
 }: Props) {
   const theme = useTheme();
+  const t = useT();
   const [open, setOpen] = useState(false);
   const parsed = parseFieldDate(value);
   // Empty fields start at today — except birthdays (maximumFuture), where the
@@ -86,6 +88,8 @@ export function DateField({
         {displayValue.length > 0 && (
           <PressableScale
             haptic="none"
+            accessibilityRole="button"
+            accessibilityLabel={t('a11y.clearField')}
             onPress={() => {
               triggerHaptic('selection');
               onChange('');

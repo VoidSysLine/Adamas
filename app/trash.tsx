@@ -46,12 +46,24 @@ export default function TrashScreen() {
   return (
     <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
       <View style={[styles.nav, { paddingTop: insets.top + spacing.sm }]}>
-        <PressableScale haptic="light" style={styles.navButton} onPress={() => router.back()}>
+        <PressableScale
+          haptic="light"
+          style={styles.navButton}
+          accessibilityRole="button"
+          accessibilityLabel={t('common.back')}
+          onPress={() => router.back()}
+        >
           <Ionicons name="chevron-back" size={24} color={theme.colors.text} />
         </PressableScale>
         <Text style={[typo.headline, { color: theme.colors.text }]}>{t('trash.title')}</Text>
         {trash.length > 0 ? (
-          <PressableScale haptic="none" style={styles.navButton} onPress={confirmEmpty}>
+          <PressableScale
+            haptic="none"
+            style={styles.navButton}
+            accessibilityRole="button"
+            accessibilityLabel={t('trash.emptyTrash')}
+            onPress={confirmEmpty}
+          >
             <Ionicons name="trash-bin-outline" size={20} color={theme.colors.danger} />
           </PressableScale>
         ) : (
@@ -84,6 +96,8 @@ export default function TrashScreen() {
                 <PressableScale
                   haptic="light"
                   style={styles.action}
+                  accessibilityRole="button"
+                  accessibilityLabel={`${entry.title} ${t('a11y.restore')}`}
                   onPress={() => {
                     restoreEntry(entry.id);
                     triggerHaptic('success');
@@ -92,7 +106,13 @@ export default function TrashScreen() {
                 >
                   <Ionicons name="arrow-undo-outline" size={20} color={theme.colors.accent} />
                 </PressableScale>
-                <PressableScale haptic="none" style={styles.action} onPress={() => confirmPurge(entry.id, entry.title)}>
+                <PressableScale
+                  haptic="none"
+                  style={styles.action}
+                  accessibilityRole="button"
+                  accessibilityLabel={`${entry.title} ${t('common.delete')}`}
+                  onPress={() => confirmPurge(entry.id, entry.title)}
+                >
                   <Ionicons name="trash-outline" size={19} color={theme.colors.danger} />
                 </PressableScale>
               </GlassCard>

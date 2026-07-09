@@ -70,7 +70,13 @@ export function CopyRow({ label, value, copyValue, href, secure, mono, multiline
         </Text>
       </PressableScale>
       {secure && (
-        <PressableScale haptic="none" style={styles.iconButton} onPress={() => void toggleReveal()}>
+        <PressableScale
+          haptic="none"
+          style={styles.iconButton}
+          accessibilityRole="button"
+          accessibilityLabel={revealed ? t('detail.hide') : t('detail.reveal')}
+          onPress={() => void toggleReveal()}
+        >
           <Ionicons
             name={revealed ? 'eye-off-outline' : 'eye-outline'}
             size={19}
@@ -79,11 +85,23 @@ export function CopyRow({ label, value, copyValue, href, secure, mono, multiline
         </PressableScale>
       )}
       {href && (
-        <PressableScale haptic="none" style={styles.iconButton} onPress={openInBrowser}>
+        <PressableScale
+          haptic="none"
+          style={styles.iconButton}
+          accessibilityRole="button"
+          accessibilityLabel={t('a11y.openLink')}
+          onPress={openInBrowser}
+        >
           <Ionicons name="open-outline" size={18} color={theme.colors.accent} />
         </PressableScale>
       )}
-      <PressableScale haptic="none" style={styles.iconButton} onPress={() => void guardedCopy()}>
+      <PressableScale
+        haptic="none"
+        style={styles.iconButton}
+        accessibilityRole="button"
+        accessibilityLabel={`${label} ${t('a11y.copy')}`}
+        onPress={() => void guardedCopy()}
+      >
         <Ionicons name="copy-outline" size={18} color={theme.colors.accent} />
       </PressableScale>
     </View>
